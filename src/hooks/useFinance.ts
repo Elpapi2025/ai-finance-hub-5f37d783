@@ -1,9 +1,28 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Transaction, FinanceSummary } from '@/types/finance';
-import { mockTransactions } from '@/data/mockData';
+import { getTransactions, addTransaction as apiAddTransaction, deleteTransaction as apiDeleteTransaction } from '@/services/mongoApi';
+import { toast } from 'sonner';
 
 export function useFinance() {
-  const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchTransactions = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const data = await getTransactions();
+      setTransactions(data);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      toast.error('Error al cargar transacciones');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
 
   const summary = useMemo<FinanceSummary>(() => {
     const totalIncome = transactions
@@ -25,17 +44,31 @@ export function useFinance() {
     };
   }, [transactions]);
 
-  const addTransaction = (transaction: Omit<Transaction, 'id' | 'createdAt'>) => {
-    const newTransaction: Transaction = {
-      ...transaction,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-    };
-    setTransactions(prev => [newTransaction, ...prev]);
+  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'createdAt'>) => {
+    try {
+      const insertedId = await apiAddTransaction(transaction);
+      const newTransaction: Transaction = {
+        ...transaction,
+        id: insertedId || Date.now().toString(),
+        createdAt: new Date(),
+      };
+      setTransactions(prev => [newTransaction, ...prev]);
+      toast.success('Transacción agregada');
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      toast.error('Error al agregar transacción');
+    }
   };
 
-  const deleteTransaction = (id: string) => {
-    setTransactions(prev => prev.filter(t => t.id !== id));
+  const deleteTransaction = async (id: string) => {
+    try {
+      await apiDeleteTransaction(id);
+      setTransactions(prev => prev.filter(t => t.id !== id));
+      toast.success('Transacción eliminada');
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      toast.error('Error al eliminar transacción');
+    }
   };
 
   const expensesByCategory = useMemo(() => {
@@ -57,5 +90,7 @@ export function useFinance() {
     addTransaction,
     deleteTransaction,
     expensesByCategory,
+    isLoading,
+    refetch: fetchTransactions,
   };
 }

@@ -1,14 +1,15 @@
 import { MonthlyChart } from '@/components/finance/MonthlyChart';
 import { ExpenseChart } from '@/components/finance/ExpenseChart';
-import { FinanceSummary } from '@/types/finance';
+import { FinanceSummary, Transaction } from '@/types/finance';
 import { TrendingUp, TrendingDown, Target, Calendar } from 'lucide-react';
 
 interface ReportsViewProps {
   summary: FinanceSummary;
   expensesByCategory: { name: string; value: number }[];
+  transactions: Transaction[];
 }
 
-export function ReportsView({ summary, expensesByCategory }: ReportsViewProps) {
+export function ReportsView({ summary, expensesByCategory, transactions }: ReportsViewProps) {
   const insights = [
     {
       icon: TrendingUp,
@@ -70,7 +71,7 @@ export function ReportsView({ summary, expensesByCategory }: ReportsViewProps) {
 
       {/* Charts */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <MonthlyChart />
+        <MonthlyChart transactions={transactions} />
         <ExpenseChart data={expensesByCategory} />
       </div>
 

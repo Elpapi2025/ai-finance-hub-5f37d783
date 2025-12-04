@@ -21,6 +21,7 @@ const Index = () => {
     addTransaction,
     deleteTransaction,
     expensesByCategory,
+    isLoading,
   } = useFinance();
 
   const handleViewChange = (view: string) => {
@@ -29,6 +30,15 @@ const Index = () => {
   };
 
   const renderView = () => {
+    if (isLoading) {
+      return (
+        <div className="glass rounded-2xl p-8 text-center animate-pulse">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-primary/20" />
+          <p className="text-muted-foreground">Cargando datos...</p>
+        </div>
+      );
+    }
+
     switch (currentView) {
       case 'dashboard':
         return (
@@ -52,6 +62,7 @@ const Index = () => {
           <ReportsView
             summary={summary}
             expensesByCategory={expensesByCategory}
+            transactions={transactions}
           />
         );
       case 'ai':

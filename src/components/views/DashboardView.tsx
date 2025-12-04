@@ -74,7 +74,7 @@ export function DashboardView({
 
       {/* Charts Row */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <MonthlyChart />
+        <MonthlyChart transactions={transactions} />
         <ExpenseChart data={expensesByCategory} />
       </div>
 

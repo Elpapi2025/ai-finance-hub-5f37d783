@@ -7,16 +7,54 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { mockMonthlyData } from '@/data/mockData';
+import { Transaction } from '@/types/finance';
+import { useMemo } from 'react';
 
-export function MonthlyChart() {
+interface MonthlyChartProps {
+  transactions: Transaction[];
+}
+
+export function MonthlyChart({ transactions }: MonthlyChartProps) {
+  const monthlyData = useMemo(() => {
+    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const now = new Date();
+    const last6Months: { month: string; income: number; expenses: number }[] = [];
+
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthIndex = date.getMonth();
+      const year = date.getFullYear();
+      
+      const monthTransactions = transactions.filter(t => {
+        const tDate = new Date(t.date);
+        return tDate.getMonth() === monthIndex && tDate.getFullYear() === year;
+      });
+
+      const income = monthTransactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      const expenses = monthTransactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      last6Months.push({
+        month: months[monthIndex],
+        income,
+        expenses,
+      });
+    }
+
+    return last6Months;
+  }, [transactions]);
+
   return (
     <div className="glass rounded-2xl p-6 animate-slide-up">
       <h3 className="text-lg font-semibold mb-4">Resumen Mensual</h3>
       
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={mockMonthlyData}>
+          <AreaChart data={monthlyData}>
             <defs>
               <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="hsl(160 84% 39%)" stopOpacity={0.3} />
