@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Outlet, useLocation } from "react-router-
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { useFinance } from "./hooks/useFinance";
+import { DebugConsole } from "./components/DebugConsole"; // Import DebugConsole
 
 // Import all view components
 import { DashboardView } from "./components/views/DashboardView";
@@ -114,6 +115,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </ErrorBoundary>
+      <DebugConsole /> {/* Integrate DebugConsole here */}
     </TooltipProvider>
   </QueryClientProvider>
 );
