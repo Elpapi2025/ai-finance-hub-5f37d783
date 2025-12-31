@@ -40,6 +40,15 @@ jobs:
           npx cap init "Finance Hub" com.gemini.financehub --web-dir dist
           npx cap add android
 
+      - name: Set Java compatibility to 17 in build.gradle
+        run: |
+          # Ensure Android Gradle Plugin works with Java 17, matching setup-java
+          sed -i '/android {/a \
+              compileOptions {\
+                  sourceCompatibility JavaVersion.VERSION_17\
+                  targetCompatibility JavaVersion.VERSION_17\
+              }' android/app/build.gradle
+
       - name: Sync Capacitor
         run: npx cap sync android
 
