@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Transaction, FinanceSummary } from '@/types/finance';
-import { getTransactions, addTransaction as apiAddTransaction, deleteTransaction as apiDeleteTransaction } from '@/services/mongoApi';
+import { initializeDatabase, addTransaction as sqliteAddTransaction, getTransactions as sqliteGetTransactions, deleteTransaction as sqliteDeleteTransaction } from '@/services/sqliteService';
 import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
 
 export function useFinance() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -10,7 +11,8 @@ export function useFinance() {
   const fetchTransactions = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = await getTransactions();
+      await initializeDatabase(); // Initialize DB
+      const data = await sqliteGetTransactions(); // Use sqlite service
       setTransactions(data);
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -44,14 +46,13 @@ export function useFinance() {
     };
   }, [transactions]);
 
-  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'createdAt'>) => {
+  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     try {
-      const insertedId = await apiAddTransaction(transaction);
       const newTransaction: Transaction = {
         ...transaction,
-        id: insertedId || Date.now().toString(),
-        createdAt: new Date(),
+        id: uuidv4(), // Generate a UUID for the id
       };
+      await sqliteAddTransaction(newTransaction);
       setTransactions(prev => [newTransaction, ...prev]);
       toast.success('Transacción agregada');
     } catch (error) {
@@ -62,7 +63,7 @@ export function useFinance() {
 
   const deleteTransaction = async (id: string) => {
     try {
-      await apiDeleteTransaction(id);
+      await sqliteDeleteTransaction(id);
       setTransactions(prev => prev.filter(t => t.id !== id));
       toast.success('Transacción eliminada');
     } catch (error) {
