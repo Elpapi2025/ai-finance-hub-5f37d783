@@ -1,13 +1,21 @@
-import React, { Component } from "react";
+import React, { Component, useState } from "react"; // Add useState
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Outlet, useLocation } from "react-router-dom";
-import Index from "./pages/Index";
+// import Index from "./pages/Index"; // Removed Index import
 import NotFound from "./pages/NotFound";
 import { useFinance } from "./hooks/useFinance";
 import { DebugConsole } from "./components/DebugConsole"; // Import DebugConsole
+
+// Layout components
+import { Header } from '@/components/layout/Header';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { MobileNav } from '@/components/layout/MobileNav';
+import { AddTransactionModal } from '@/components/finance/AddTransactionModal';
+import { cn } from '@/lib/utils'; // Import cn
+import { Transaction } from '@/types/finance'; // Import Transaction type for onAdd prop
 
 // Import all view components
 import { DashboardView } from "./components/views/DashboardView";
@@ -15,6 +23,7 @@ import { TransactionsView } from "./components/views/TransactionsView";
 import { ReportsView } from "./components/views/ReportsView";
 import { AIAssistantView } from "./components/views/AIAssistantView";
 import { DataManagementView } from "./components/views/DataManagementView";
+import { FinanceContextType } from "./types/finance"; // Import FinanceContextType
 
 const queryClient = new QueryClient();
 
@@ -48,6 +57,9 @@ class ErrorBoundary extends Component {
 const MainLayout = () => {
   const location = useLocation();
   const currentPath = location.pathname;
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // State for sidebar
+  const [isModalOpen, setIsModalOpen] = useState(false); // State for AddTransactionModal
+
   // Get all necessary finance data here
   const {
     transactions,
@@ -76,11 +88,55 @@ const MainLayout = () => {
 
   console.log("MainLayout: financeContext before passing to Outlet:", financeContext); // Debug log
 
+  const handleMenuToggle = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const handleViewChange = () => { // Simplified to just close sidebar/mobile nav
+    setIsSidebarOpen(false);
+  };
+
   return (
-    <Index currentPath={currentPath} onAddTransaction={addTransaction}> {/* Pass addTransaction to Index again */}
-      {/* Use Outlet context to pass finance data to nested route elements */}
-      <Outlet context={financeContext} />
-    </Index>
+    <div className="min-h-screen bg-background">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+      </div>
+
+      <Header
+        onMenuToggle={handleMenuToggle}
+        isMenuOpen={isSidebarOpen}
+      />
+
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onViewChange={handleViewChange}
+      />
+
+      <main
+        className={cn(
+          'relative min-h-[calc(100vh-4rem)] pt-6 px-4 lg:px-8',
+          'lg:ml-64 transition-all duration-300'
+        )}
+      >
+        <div className="max-w-7xl mx-auto">
+          <Outlet context={financeContext} /> {/* Renders the matched child route component */}
+        </div>
+      </main>
+
+      <MobileNav
+        currentView={currentPath} // Pass currentPath for MobileNav
+        onViewChange={handleViewChange} // Close mobile nav on click
+        onAddClick={() => setIsModalOpen(true)}
+      />
+
+      <AddTransactionModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onAdd={addTransaction} // Pass addTransaction directly from MainLayout
+      />
+    </div>
   );
 };
 
