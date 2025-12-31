@@ -42,20 +42,10 @@ jobs:
 
       - name: Set Java compatibility to 17 in build.gradle
         run: |
-          awk '/android {/,/}/ {
-              if ($0 ~ /sourceCompatibility/ || $0 ~ /targetCompatibility/) {
-                  sub(/JavaVersion.VERSION_[0-9]+/, "JavaVersion.VERSION_17", $0);
-              } else if (!found_compile_options && $0 ~ /android {/) {
-                  print;
-                  print "    compileOptions {";
-                  print "        sourceCompatibility JavaVersion.VERSION_17";
-                  print "        targetCompatibility JavaVersion.VERSION_17";
-                  print "    }";
-                  found_compile_options = 1;
-                  next;
-              }
-              print;
-          }' android/app/build.gradle > temp_build.gradle && mv temp_build.gradle android/app/build.gradle
+          # Ensure Android Gradle Plugin works with Java 17, matching setup-java
+          # Use sed to replace sourceCompatibility and targetCompatibility
+          sed -i '/sourceCompatibility/s/JavaVersion.VERSION_[0-9]\+/JavaVersion.VERSION_17/' android/app/build.gradle
+          sed -i '/targetCompatibility/s/JavaVersion.VERSION_[0-9]\+/JavaVersion.VERSION_17/' android/app/build.gradle
 
       - name: Sync Capacitor
         run: npx cap sync android
