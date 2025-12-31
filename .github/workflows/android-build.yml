@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17' # Android development generally uses Java 17
+          java-version: '21' # Using Java 21 as requested and for modern compatibility
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
@@ -42,14 +42,12 @@ jobs:
 
       - name: Set Java compatibility to 17 in build.gradle
         run: |
-          # Robustly set Android Gradle Plugin to use Java 17, matching setup-java.
-          # First, delete any existing compileOptions block to avoid duplicates or conflicts.
-          sed -i '/compileOptions {/,/}/d' android/app/build.gradle
-          # Then, insert the correct compileOptions block with Java 17 compatibility.
+          # Robustly set Android Gradle Plugin to use Java 17 by directly setting compiler arguments.
+          # Insert tasks.withType(JavaCompile) block after the android { block.
           sed -i '/android {/a \
-              compileOptions {\
-                  sourceCompatibility JavaVersion.VERSION_17\
-                  targetCompatibility JavaVersion.VERSION_17\
+              tasks.withType(JavaCompile) {\
+                  options.compilerArgs << "--release"\
+                  options.compilerArgs << "21"\
               }' android/app/build.gradle
           # Print the modified build.gradle file to diagnose if sed worked
           echo "--- Modified android/app/build.gradle ---"
