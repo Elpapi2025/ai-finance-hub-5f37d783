@@ -74,7 +74,7 @@ const MainLayout = () => {
   };
 
   return (
-    <Index currentPath={currentPath} onAddTransaction={addTransaction}>
+    <Index currentPath={currentPath}> {/* No longer passing onAddTransaction as a prop directly to Index */}
       {/* Use Outlet context to pass finance data to nested route elements */}
       <Outlet context={financeContext} />
     </Index>
