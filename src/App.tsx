@@ -62,7 +62,7 @@ const MainLayout = () => {
   } = useFinance();
 
   // Create a context object to pass finance data down to nested routes
-  const financeContext = {
+  const financeContext: FinanceContextType = React.useMemo(() => ({
     transactions,
     summary,
     addTransaction,
@@ -72,7 +72,7 @@ const MainLayout = () => {
     clearAllFinanceData,
     exportFinanceData,
     importFinanceData,
-  };
+  }), [transactions, summary, addTransaction, deleteTransaction, expensesByCategory, isLoading, clearAllFinanceData, exportFinanceData, importFinanceData]);
 
   console.log("MainLayout: financeContext before passing to Outlet:", financeContext); // Debug log
 
