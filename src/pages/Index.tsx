@@ -3,19 +3,20 @@ import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { AddTransactionModal } from '@/components/finance/AddTransactionModal';
-import { useFinance } from '@/hooks/useFinance';
 import { cn } from '@/lib/utils';
 import { Outlet } from 'react-router-dom'; // Import Outlet
+import { Transaction } from '@/types/finance'; // Import Transaction type
 
 interface IndexProps {
   currentPath: string; // To allow MobileNav to still know the current route
+  onAddTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>; // Add onAddTransaction prop
 }
 
-const Index = ({ currentPath }: IndexProps) => {
+const Index = ({ currentPath, onAddTransaction }: IndexProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { addTransaction } = useFinance(); // Only need addTransaction here
+  // Removed: const { addTransaction } = useFinance(); // Only need addTransaction here
 
   const handleMenuToggle = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -59,7 +60,7 @@ const Index = ({ currentPath }: IndexProps) => {
       <AddTransactionModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onAdd={addTransaction}
+        onAdd={onAddTransaction} // Pass the prop here
       />
     </div>
   );

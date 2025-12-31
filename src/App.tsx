@@ -2,9 +2,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Outlet, useLocation } from "react-router-dom"; // Import Outlet and useLocation
+import { BrowserRouter, Routes, Route, Outlet, useLocation } from "react-router-dom";
 import Index from "./pages/Index"; // Index will now be a layout component
 import NotFound from "./pages/NotFound";
+import { useFinance } from "./hooks/useFinance"; // Import useFinance
 
 // Import all view components
 import { DashboardView } from "./components/views/DashboardView";
@@ -18,11 +19,11 @@ const queryClient = new QueryClient();
 // Layout component to manage main app structure (Header, Sidebar, Main content via Outlet)
 const MainLayout = () => {
   const location = useLocation();
-  // Determine currentView based on path for MobileNav, if needed, or pass current path
   const currentPath = location.pathname;
+  const { addTransaction } = useFinance(); // Call useFinance here
 
   return (
-    <Index currentPath={currentPath}> {/* Pass currentPath to Index for layout purposes */}
+    <Index currentPath={currentPath} onAddTransaction={addTransaction}> {/* Pass addTransaction to Index */}
       <Outlet /> {/* Renders the matched child route component */}
     </Index>
   );
