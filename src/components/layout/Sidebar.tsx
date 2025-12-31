@@ -1,3 +1,4 @@
+import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -6,6 +7,7 @@ import {
   Target,
   Settings,
   Sparkles,
+  Database, // Import the Database icon
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -15,12 +17,13 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'transactions', label: 'Transacciones', icon: ArrowUpDown },
-  { id: 'reports', label: 'Reportes', icon: PieChart },
-  { id: 'goals', label: 'Metas', icon: Target },
-  { id: 'ai', label: 'Asistente IA', icon: Sparkles },
-  { id: 'settings', label: 'Ajustes', icon: Settings },
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/' },
+  { id: 'transactions', label: 'Transacciones', icon: ArrowUpDown, path: '/transactions' },
+  { id: 'reports', label: 'Reportes', icon: PieChart, path: '/reports' },
+  { id: 'goals', label: 'Metas', icon: Target, path: '/goals' },
+  { id: 'ai', label: 'Asistente IA', icon: Sparkles, path: '/ai' },
+  { id: 'data-management', label: 'Gestión de Datos', icon: Database, path: '/data-management' }, // New item
+  { id: 'settings', label: 'Ajustes', icon: Settings, path: '/settings' },
 ];
 
 export function Sidebar({ isOpen, currentView, onViewChange }: SidebarProps) {
@@ -46,25 +49,33 @@ export function Sidebar({ isOpen, currentView, onViewChange }: SidebarProps) {
         <nav className="p-4 space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = currentView === item.id;
+            // The active state will now be handled by NavLink's isActive prop
+            // const isActive = currentView === item.id; // No longer needed
             
             return (
-              <button
+              <NavLink
                 key={item.id}
-                onClick={() => onViewChange(item.id)}
-                className={cn(
-                  'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
-                  isActive
-                    ? 'bg-sidebar-accent text-sidebar-primary'
-                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                )}
+                to={item.path}
+                className={({ isActive }) =>
+                  cn(
+                    'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
+                    isActive
+                      ? 'bg-sidebar-accent text-sidebar-primary'
+                      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                  )
+                }
+                onClick={() => onViewChange(item.id)} // Keep for mobile sidebar closing
               >
-                <Icon className={cn('w-5 h-5', isActive && 'text-sidebar-primary')} />
-                <span className="font-medium">{item.label}</span>
-                {isActive && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-sidebar-primary" />
+                {({ isActive }) => (
+                  <>
+                    <Icon className={cn('w-5 h-5', isActive && 'text-sidebar-primary')} />
+                    <span className="font-medium">{item.label}</span>
+                    {isActive && (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-sidebar-primary" />
+                    )}
+                  </>
                 )}
-              </button>
+              </NavLink>
             );
           })}
         </nav>

@@ -91,4 +91,47 @@ const deleteTransaction = async (id: string) => {
   await db.run(query, [id]);
 };
 
-export { initializeDatabase, addTransaction, getTransactions, updateTransaction, deleteTransaction };
+const clearAllTransactions = async () => {
+  if (!db) {
+    console.error('Database not initialized.');
+    return;
+  }
+  const query = `DELETE FROM ${TABLE_NAME};`;
+  await db.run(query);
+  console.log('All transactions cleared.');
+};
+
+const exportTransactionsToJson = async (): Promise<string> => {
+  if (!db) {
+    console.error('Database not initialized.');
+    return '[]';
+  }
+  const transactions = await getTransactions();
+  return JSON.stringify(transactions, null, 2); // Pretty print JSON
+};
+
+const importTransactionsFromJson = async (jsonString: string) => {
+  if (!db) {
+    console.error('Database not initialized.');
+    return;
+  }
+  try {
+    const transactions: Transaction[] = JSON.parse(jsonString);
+    await clearAllTransactions(); // Clear existing data before importing
+
+    // Begin a transaction for performance and data integrity
+    await db.beginTransaction();
+    for (const transaction of transactions) {
+      // Re-add to ensure data integrity and proper ID handling
+      await addTransaction(transaction); 
+    }
+    await db.commitTransaction();
+    console.log('Transactions imported successfully.');
+  } catch (error) {
+    console.error('Error importing transactions from JSON:', error);
+    await db.rollbackTransaction(); // Rollback if any error occurs
+    throw error; // Re-throw to propagate error to caller
+  }
+};
+
+export { initializeDatabase, addTransaction, getTransactions, updateTransaction, deleteTransaction, clearAllTransactions, exportTransactionsToJson, importTransactionsFromJson };

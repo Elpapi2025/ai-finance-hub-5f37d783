@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Transaction, FinanceSummary } from '@/types/finance';
-import { initializeDatabase, addTransaction as sqliteAddTransaction, getTransactions as sqliteGetTransactions, deleteTransaction as sqliteDeleteTransaction } from '@/services/sqliteService';
+import { initializeDatabase, addTransaction as sqliteAddTransaction, getTransactions as sqliteGetTransactions, deleteTransaction as sqliteDeleteTransaction, clearAllTransactions as sqliteClearAllTransactions, exportTransactionsToJson as sqliteExportTransactionsToJson, importTransactionsFromJson as sqliteImportTransactionsFromJson } from '@/services/sqliteService';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -21,6 +21,49 @@ export function useFinance() {
       setIsLoading(false);
     }
   }, []);
+
+  const clearAllFinanceData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      await sqliteClearAllTransactions();
+      setTransactions([]); // Clear local state immediately
+      toast.success('Todos los datos financieros han sido borrados.');
+    } catch (error) {
+      console.error('Error clearing all finance data:', error);
+      toast.error('Error al borrar todos los datos financieros.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const exportFinanceData = useCallback(async (): Promise<string | undefined> => {
+    try {
+      setIsLoading(true);
+      const jsonData = await sqliteExportTransactionsToJson();
+      toast.success('Datos exportados exitosamente.');
+      return jsonData;
+    } catch (error) {
+      console.error('Error exporting finance data:', error);
+      toast.error('Error al exportar datos financieros.');
+      return undefined;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const importFinanceData = useCallback(async (jsonData: string) => {
+    try {
+      setIsLoading(true);
+      await sqliteImportTransactionsFromJson(jsonData);
+      await fetchTransactions(); // Refresh UI after import
+      toast.success('Datos importados exitosamente.');
+    } catch (error) {
+      console.error('Error importing finance data:', error);
+      toast.error('Error al importar datos financieros.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchTransactions]);
 
   useEffect(() => {
     fetchTransactions();
@@ -93,5 +136,8 @@ export function useFinance() {
     expensesByCategory,
     isLoading,
     refetch: fetchTransactions,
+    clearAllFinanceData,
+    exportFinanceData,
+    importFinanceData,
   };
 }
