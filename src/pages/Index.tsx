@@ -4,22 +4,26 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { AddTransactionModal } from '@/components/finance/AddTransactionModal';
 import { cn } from '@/lib/utils';
-import { Outlet, useOutletContext } from 'react-router-dom'; // Import Outlet and useOutletContext
+import { Outlet } from 'react-router-dom'; // Keep Outlet
 import { Transaction } from '@/types/finance'; // Import Transaction type
-import { FinanceContextType } from '@/types/finance'; // Assuming a type for the context
 
 interface IndexProps {
   currentPath: string; // To allow MobileNav to still know the current route
+  onAddTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>; // Add onAddTransaction prop back
 }
 
-const Index = ({ currentPath }: IndexProps) => {
+const Index = ({ currentPath, onAddTransaction }: IndexProps) => { // Accept onAddTransaction here
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { addTransaction } = useOutletContext<FinanceContextType>(); // Get addTransaction from context
+  // Removed: const { addTransaction } = useOutletContext<FinanceContextType>(); // No longer needed
+
+  // Removed: console.log("Index component: addTransaction from context is", addTransaction); // Debug log
 
   const handleMenuToggle = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
+
+  // Removed: if (!addTransaction) { ... } guard
 
   return (
     <div className="min-h-screen bg-background">
@@ -59,7 +63,7 @@ const Index = ({ currentPath }: IndexProps) => {
       <AddTransactionModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onAdd={addTransaction} // Pass the prop here
+        onAdd={onAddTransaction} // Pass the prop here
       />
     </div>
   );
