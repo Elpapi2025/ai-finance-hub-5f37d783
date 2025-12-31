@@ -10,7 +10,18 @@ import { es } from 'date-fns/locale';
 import { useOutletContext } from 'react-router-dom'; // Import useOutletContext
 
 export function TransactionsView() { // No props needed here anymore
-  const { transactions, deleteTransaction, isLoading } = useOutletContext<FinanceContextType>();
+  const context = useOutletContext<FinanceContextType>();
+  
+  if (!context) {
+    console.error("TransactionsView: Finance context is null/undefined!");
+    return (
+      <div className="glass rounded-2xl p-8 text-center text-red-500">
+        Error: No se pudieron cargar los datos financieros. Por favor, reinicia la aplicación.
+      </div>
+    );
+  }
+
+  const { transactions, deleteTransaction, isLoading } = context;
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');

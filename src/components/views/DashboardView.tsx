@@ -9,6 +9,19 @@ import { FinanceSummary, Transaction, FinanceContextType } from '@/types/finance
 import { useOutletContext } from 'react-router-dom'; // Import useOutletContext
 
 export function DashboardView() { // No props needed here anymore
+  const context = useOutletContext<FinanceContextType>(); // Get entire context
+  console.log("DashboardView: Context from useOutletContext is", context); // Debug log
+
+  // Add this guard:
+  if (!context) {
+    console.error("DashboardView: Finance context is null/undefined!");
+    return (
+      <div className="glass rounded-2xl p-8 text-center text-red-500">
+        Error: No se pudieron cargar los datos financieros. Por favor, reinicia la aplicación.
+      </div>
+    );
+  }
+
   const {
     transactions,
     summary,
@@ -16,7 +29,7 @@ export function DashboardView() { // No props needed here anymore
     expensesByCategory,
     isLoading,
     addTransaction, // Get addTransaction from context for onAddClick
-  } = useOutletContext<FinanceContextType>();
+  } = context;
 
   if (isLoading || !summary) { // Render loading state if data is not ready
     return (

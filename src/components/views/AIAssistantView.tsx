@@ -13,7 +13,18 @@ interface Message {
 }
 
 export function AIAssistantView() { // No props needed here anymore
-  const { summary, isLoading } = useOutletContext<FinanceContextType>();
+  const context = useOutletContext<FinanceContextType>();
+
+  if (!context) {
+    console.error("AIAssistantView: Finance context is null/undefined!");
+    return (
+      <div className="glass rounded-2xl p-8 text-center text-red-500">
+        Error: No se pudieron cargar los datos del asistente. Por favor, reinicia la aplicación.
+      </div>
+    );
+  }
+
+  const { summary, isLoading } = context;
 
   const initialAssistantMessage = useMemo(() => {
     if (isLoading || !summary) {

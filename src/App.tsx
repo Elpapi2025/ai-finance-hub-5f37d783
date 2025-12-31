@@ -73,6 +73,8 @@ const MainLayout = () => {
     importFinanceData,
   };
 
+  console.log("MainLayout: financeContext before passing to Outlet:", financeContext); // Debug log
+
   return (
     <Index currentPath={currentPath} onAddTransaction={addTransaction}> {/* Pass addTransaction to Index again */}
       {/* Use Outlet context to pass finance data to nested route elements */}

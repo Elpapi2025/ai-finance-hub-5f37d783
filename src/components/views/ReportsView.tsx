@@ -5,7 +5,18 @@ import { TrendingUp, TrendingDown, Target, Calendar } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom'; // Import useOutletContext
 
 export function ReportsView() { // No props needed here anymore
-  const { summary, expensesByCategory, transactions, isLoading } = useOutletContext<FinanceContextType>();
+  const context = useOutletContext<FinanceContextType>();
+
+  if (!context) {
+    console.error("ReportsView: Finance context is null/undefined!");
+    return (
+      <div className="glass rounded-2xl p-8 text-center text-red-500">
+        Error: No se pudieron cargar los datos financieros. Por favor, reinicia la aplicación.
+      </div>
+    );
+  }
+
+  const { summary, expensesByCategory, transactions, isLoading } = context;
 
   if (isLoading || !summary) { // Render loading state if data is not ready
     return (

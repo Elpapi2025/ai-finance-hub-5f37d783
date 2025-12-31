@@ -8,7 +8,18 @@ import { toast } from 'sonner';
 import { useOutletContext } from 'react-router-dom'; // Import useOutletContext
 
 export function DataManagementView() {
-  const { clearAllFinanceData, exportFinanceData, importFinanceData, isLoading } = useOutletContext<FinanceContextType>();
+  const context = useOutletContext<FinanceContextType>();
+
+  if (!context) {
+    console.error("DataManagementView: Finance context is null/undefined!");
+    return (
+      <div className="glass rounded-2xl p-8 text-center text-red-500">
+        Error: No se pudieron cargar las funciones de gestión de datos. Por favor, reinicia la aplicación.
+      </div>
+    );
+  }
+
+  const { clearAllFinanceData, exportFinanceData, importFinanceData, isLoading } = context;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importedJson, setImportedJson] = useState<string>('');
 
