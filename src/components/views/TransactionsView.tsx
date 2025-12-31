@@ -2,33 +2,46 @@ import { useState } from 'react';
 import { Search, Filter, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Transaction } from '@/types/finance';
+import { FinanceContextType } from '@/types/finance'; // Import FinanceContextType
 import { cn } from '@/lib/utils';
 import { allCategories } from '@/data/categories';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useOutletContext } from 'react-router-dom'; // Import useOutletContext
 
-interface TransactionsViewProps {
-  transactions: Transaction[];
-  onDelete: (id: string) => void;
-}
+export function TransactionsView() { // No props needed here anymore
+  const { transactions, deleteTransaction, isLoading } = useOutletContext<FinanceContextType>();
 
-export function TransactionsView({ transactions, onDelete }: TransactionsViewProps) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
 
   const filteredTransactions = transactions
     .filter((t) => {
       if (filter !== 'all' && t.type !== filter) return false;
-      if (search && !t.description.toLowerCase().includes(search.toLowerCase())) return false;
+      if (search && !t.name.toLowerCase().includes(search.toLowerCase())) return false; // Use t.name
       return true;
     })
-    .sort((a, b) => b.date.getTime() - a.date.getTime());
+    .sort((a, b) => {
+      // Assuming date is in ISO string format (e.g., "YYYY-MM-DD")
+      // Direct string comparison works for ISO dates
+      if (a.date > b.date) return -1;
+      if (a.date < b.date) return 1;
+      return 0;
+    });
 
   const getCategoryIcon = (categoryName: string) => {
     const category = allCategories.find((c) => c.name === categoryName);
     return category?.icon || '📦';
   };
+
+  if (isLoading) { // Render loading state if data is not ready
+    return (
+      <div className="glass rounded-2xl p-8 text-center animate-pulse">
+        <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-primary/20" />
+        <p className="text-muted-foreground">Cargando datos...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-24 lg:pb-6">
@@ -91,15 +104,23 @@ export function TransactionsView({ transactions, onDelete }: TransactionsViewPro
                 {getCategoryIcon(transaction.category)}
               </div>
               <div>
-                <p className="font-medium">{transaction.description}</p>
+                <p className="font-medium">{transaction.name}</p> {/* Use t.name */}
                 <p className="text-sm text-muted-foreground">
                   {transaction.category} •{' '}
-                  {format(transaction.date, "d 'de' MMMM, yyyy", { locale: es })}
+                  {format(new Date(transaction.date), "d 'de' MMMM, yyyy", { locale: es })} {/* Parse date string */}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-expense"
+                onClick={() => deleteTransaction(transaction.id)}
+              >
+                Eliminar
+              </Button>
               <span
                 className={cn(
                   'font-semibold text-lg',
@@ -109,14 +130,6 @@ export function TransactionsView({ transactions, onDelete }: TransactionsViewPro
                 {transaction.type === 'income' ? '+' : '-'}$
                 {transaction.amount.toLocaleString()}
               </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-expense"
-                onClick={() => onDelete(transaction.id)}
-              >
-                Eliminar
-              </Button>
             </div>
           </div>
         ))}

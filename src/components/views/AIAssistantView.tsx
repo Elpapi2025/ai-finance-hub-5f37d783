@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react'; // Added useMemo
 import { Send, Sparkles, Bot, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { FinanceSummary } from '@/types/finance';
+import { FinanceSummary, FinanceContextType } from '@/types/finance'; // Import FinanceContextType
+import { useOutletContext } from 'react-router-dom'; // Import useOutletContext
 
 interface Message {
   id: string;
@@ -11,20 +12,25 @@ interface Message {
   content: string;
 }
 
-interface AIAssistantViewProps {
-  summary: FinanceSummary;
-}
+export function AIAssistantView() { // No props needed here anymore
+  const { summary, isLoading } = useOutletContext<FinanceContextType>();
 
-export function AIAssistantView({ summary }: AIAssistantViewProps) {
+  const initialAssistantMessage = useMemo(() => {
+    if (isLoading || !summary) {
+      return "¡Hola! 👋 Soy tu asistente financiero con IA. Cargando tu perfil...";
+    }
+    return `¡Hola! 👋 Soy tu asistente financiero con IA. Basado en tu perfil, veo que tienes un balance de $${summary.balance.toLocaleString()} y una tasa de ahorro del ${summary.savingsRate.toFixed(0)}%. ¿En qué puedo ayudarte hoy?`;
+  }, [summary, isLoading]);
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'assistant',
-      content: `¡Hola! 👋 Soy tu asistente financiero con IA. Basado en tu perfil, veo que tienes un balance de $${summary.balance.toLocaleString()} y una tasa de ahorro del ${summary.savingsRate.toFixed(0)}%. ¿En qué puedo ayudarte hoy?`,
+      content: initialAssistantMessage,
     },
   ]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false); // Renamed to isSending to avoid conflict with isLoading from context
 
   const suggestions = [
     '¿Cómo puedo ahorrar más?',
@@ -35,6 +41,10 @@ export function AIAssistantView({ summary }: AIAssistantViewProps) {
 
   const handleSend = (text: string) => {
     if (!text.trim()) return;
+    if (isLoading || !summary) { // Don't send if data is not loaded
+      toast.error("Datos no cargados. Inténtalo de nuevo cuando el asistente esté listo.");
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -44,7 +54,7 @@ export function AIAssistantView({ summary }: AIAssistantViewProps) {
 
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
-    setIsLoading(true);
+    setIsSending(true); // Set local loading for sending
 
     // Simulate AI response
     setTimeout(() => {
@@ -71,9 +81,18 @@ export function AIAssistantView({ summary }: AIAssistantViewProps) {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-      setIsLoading(false);
+      setIsSending(false); // Reset local loading
     }, 1500);
   };
+
+  if (isLoading || !summary) { // Render loading state for the whole view
+    return (
+      <div className="glass rounded-2xl p-8 text-center animate-pulse">
+        <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-primary/20" />
+        <p className="text-muted-foreground">Cargando datos del asistente...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-10rem)] lg:h-[calc(100vh-8rem)]">
@@ -125,7 +144,7 @@ export function AIAssistantView({ summary }: AIAssistantViewProps) {
           </div>
         ))}
 
-        {isLoading && (
+        {(isLoading || isSending) && ( // Use both isLoading from context and local isSending
           <div className="flex gap-3 animate-fade-in">
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
               <Bot className="w-4 h-4 text-primary" />
@@ -150,6 +169,7 @@ export function AIAssistantView({ summary }: AIAssistantViewProps) {
             size="sm"
             onClick={() => handleSend(suggestion)}
             className="whitespace-nowrap"
+            disabled={isLoading || isSending}
           >
             {suggestion}
           </Button>
@@ -164,8 +184,9 @@ export function AIAssistantView({ summary }: AIAssistantViewProps) {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend(input)}
           className="flex-1"
+          disabled={isLoading || isSending}
         />
-        <Button onClick={() => handleSend(input)} disabled={isLoading}>
+        <Button onClick={() => handleSend(input)} disabled={isLoading || isSending}>
           <Send className="w-4 h-4" />
         </Button>
       </div>

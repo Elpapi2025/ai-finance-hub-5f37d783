@@ -2,12 +2,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useFinance } from '@/hooks/useFinance';
+import { FinanceContextType } from '@/types/finance'; // Import FinanceContextType
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useOutletContext } from 'react-router-dom'; // Import useOutletContext
 
 export function DataManagementView() {
-  const { clearAllFinanceData, exportFinanceData, importFinanceData, isLoading } = useFinance();
+  const { clearAllFinanceData, exportFinanceData, importFinanceData, isLoading } = useOutletContext<FinanceContextType>();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importedJson, setImportedJson] = useState<string>('');
 

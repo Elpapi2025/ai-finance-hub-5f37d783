@@ -1,12 +1,12 @@
-import React, { Component } from "react"; // Import React and Component
+import React, { Component } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Outlet, useLocation } from "react-router-dom";
-import Index from "./pages/Index"; // Index will now be a layout component
+import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import { useFinance } from "./hooks/useFinance"; // Import useFinance
+import { useFinance } from "./hooks/useFinance";
 
 // Import all view components
 import { DashboardView } from "./components/views/DashboardView";
@@ -44,15 +44,39 @@ class ErrorBoundary extends Component {
   }
 }
 
-// Layout component to manage main app structure (Header, Sidebar, Main content via Outlet)
 const MainLayout = () => {
   const location = useLocation();
   const currentPath = location.pathname;
-  const { addTransaction } = useFinance(); // Call useFinance here
+  // Get all necessary finance data here
+  const {
+    transactions,
+    summary,
+    addTransaction,
+    deleteTransaction,
+    expensesByCategory,
+    isLoading,
+    clearAllFinanceData,
+    exportFinanceData,
+    importFinanceData,
+  } = useFinance();
+
+  // Create a context object to pass finance data down to nested routes
+  const financeContext = {
+    transactions,
+    summary,
+    addTransaction,
+    deleteTransaction,
+    expensesByCategory,
+    isLoading,
+    clearAllFinanceData,
+    exportFinanceData,
+    importFinanceData,
+  };
 
   return (
-    <Index currentPath={currentPath} onAddTransaction={addTransaction}> {/* Pass addTransaction to Index */}
-      <Outlet /> {/* Renders the matched child route component */}
+    <Index currentPath={currentPath} onAddTransaction={addTransaction}>
+      {/* Use Outlet context to pass finance data to nested route elements */}
+      <Outlet context={financeContext} />
     </Index>
   );
 };
@@ -62,11 +86,11 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <ErrorBoundary> {/* Wrap BrowserRouter with ErrorBoundary */}
+      <ErrorBoundary>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<MainLayout />}> {/* Use MainLayout as the base for all views */}
-              <Route index element={<DashboardView />} /> {/* Default view for / */}
+            <Route path="/" element={<MainLayout />}>
+              <Route index element={<DashboardView />} />
               <Route path="transactions" element={<TransactionsView />} />
               <Route path="reports" element={<ReportsView />} />
               <Route path="goals" element={

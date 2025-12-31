@@ -29,3 +29,15 @@ export interface MonthlyData {
   income: number;
   expenses: number;
 }
+
+export interface FinanceContextType {
+  transactions: Transaction[];
+  summary: FinanceSummary;
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
+  expensesByCategory: { name: string; value: number }[];
+  isLoading: boolean;
+  clearAllFinanceData: () => Promise<void>;
+  exportFinanceData: () => Promise<string | undefined>;
+  importFinanceData: (jsonData: string) => Promise<void>;
+}

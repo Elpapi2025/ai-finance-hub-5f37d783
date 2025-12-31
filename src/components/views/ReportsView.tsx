@@ -1,41 +1,47 @@
 import { MonthlyChart } from '@/components/finance/MonthlyChart';
 import { ExpenseChart } from '@/components/finance/ExpenseChart';
-import { FinanceSummary, Transaction } from '@/types/finance';
+import { FinanceSummary, Transaction, FinanceContextType } from '@/types/finance'; // Import FinanceContextType
 import { TrendingUp, TrendingDown, Target, Calendar } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom'; // Import useOutletContext
 
-interface ReportsViewProps {
-  summary: FinanceSummary;
-  expensesByCategory: { name: string; value: number }[];
-  transactions: Transaction[];
-}
+export function ReportsView() { // No props needed here anymore
+  const { summary, expensesByCategory, transactions, isLoading } = useOutletContext<FinanceContextType>();
 
-export function ReportsView({ summary, expensesByCategory, transactions }: ReportsViewProps) {
+  if (isLoading || !summary) { // Render loading state if data is not ready
+    return (
+      <div className="glass rounded-2xl p-8 text-center animate-pulse">
+        <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-primary/20" />
+        <p className="text-muted-foreground">Cargando datos...</p>
+      </div>
+    );
+  }
+
   const insights = [
     {
       icon: TrendingUp,
       title: 'Mayor Ingreso',
-      value: 'Salario',
-      detail: '$3,500 este mes',
+      value: 'N/A', // Placeholder, needs actual logic to determine
+      detail: 'Salario', // Placeholder, needs actual logic to determine
       color: 'text-income',
     },
     {
       icon: TrendingDown,
       title: 'Mayor Gasto',
-      value: 'Alimentación',
-      detail: '$150 este mes',
+      value: 'N/A', // Placeholder, needs actual logic to determine
+      detail: 'Alimentación', // Placeholder, needs actual logic to determine
       color: 'text-expense',
     },
     {
       icon: Target,
-      title: 'Meta de Ahorro',
+      title: 'Tasa de Ahorro', // Changed title from Meta de Ahorro
       value: `${summary.savingsRate.toFixed(0)}%`,
-      detail: 'del objetivo del 20%',
+      detail: `de ${summary.totalIncome > 0 ? 'tus ingresos' : '0'}`, // Adjusted detail
       color: 'text-primary',
     },
     {
       icon: Calendar,
       title: 'Promedio Diario',
-      value: `$${Math.round(summary.totalExpenses / 30)}`,
+      value: `$${summary.totalExpenses > 0 ? Math.round(summary.totalExpenses / 30).toLocaleString() : 0}`, // Handle division by zero
       detail: 'en gastos',
       color: 'text-warning',
     },
@@ -94,7 +100,7 @@ export function ReportsView({ summary, expensesByCategory, transactions }: Repor
           <div className="text-center p-4 bg-primary/10 rounded-xl">
             <p className="text-sm text-muted-foreground">Ahorro Neto</p>
             <p className="text-2xl font-bold text-primary">
-              ${(summary.totalIncome - summary.totalExpenses).toLocaleString()}
+              ${(summary.balance).toLocaleString()} {/* Use summary.balance directly */}
             </p>
           </div>
         </div>

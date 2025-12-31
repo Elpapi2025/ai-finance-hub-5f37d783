@@ -1,24 +1,40 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react'; // Added useMemo
 import { Sparkles, RefreshCw, Lightbulb, TrendingUp, PiggyBank } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FinanceSummary } from '@/types/finance';
 import { cn } from '@/lib/utils';
 
 interface AITipsProps {
-  summary: FinanceSummary;
+  summary: FinanceSummary | undefined; // Allow summary to be undefined
 }
 
 const tipIcons = [Lightbulb, TrendingUp, PiggyBank];
 
 export function AITips({ summary }: AITipsProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [tips, setTips] = useState<string[]>([
-    'Tu tasa de ahorro del ' + summary.savingsRate.toFixed(0) + '% está por encima del promedio. ¡Sigue así!',
-    'Considera automatizar tus ahorros al inicio de cada mes para mantener la consistencia.',
-    'Revisa tus gastos de entretenimiento - podrían optimizarse un 15% sin afectar tu calidad de vida.',
-  ]);
+
+  const defaultTips = useMemo(() => {
+    if (!summary) {
+      return ['Cargando consejos financieros...'];
+    }
+    return [
+      'Tu tasa de ahorro del ' + summary.savingsRate.toFixed(0) + '% está por encima del promedio. ¡Sigue así!',
+      'Considera automatizar tus ahorros al inicio de cada mes para mantener la consistencia.',
+      'Revisa tus gastos de entretenimiento - podrían optimizarse un 15% sin afectar tu calidad de vida.',
+    ];
+  }, [summary]);
+
+  const [tips, setTips] = useState<string[]>(defaultTips);
+
+  // Update tips when summary changes
+  useMemo(() => {
+    setTips(defaultTips);
+  }, [defaultTips]);
+
 
   const generateNewTips = () => {
+    if (!summary) return; // Cannot generate tips without summary
+
     setIsLoading(true);
     // Simulating AI generation
     setTimeout(() => {
@@ -35,6 +51,15 @@ export function AITips({ summary }: AITipsProps) {
       setIsLoading(false);
     }, 1500);
   };
+
+  if (!summary) { // Render a simple placeholder if summary is not available
+    return (
+      <div className="glass rounded-2xl p-6 animate-slide-up text-center text-muted-foreground">
+        <Sparkles className="w-8 h-8 text-primary mx-auto mb-2" />
+        <p>Cargando consejos con IA...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="glass rounded-2xl p-6 animate-slide-up">
