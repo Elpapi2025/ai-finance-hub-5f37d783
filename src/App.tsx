@@ -1,3 +1,4 @@
+import React, { Component } from "react"; // Import React and Component
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +16,33 @@ import { AIAssistantView } from "./components/views/AIAssistantView";
 import { DataManagementView } from "./components/views/DataManagementView";
 
 const queryClient = new QueryClient();
+
+// Error Boundary Component
+class ErrorBoundary extends Component {
+  state = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '20px', backgroundColor: 'salmon', color: 'white', fontFamily: 'monospace' }}>
+          <h1>Something went wrong.</h1>
+          <p>{this.state.error?.toString()}</p>
+          <p>Check console for more details.</p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // Layout component to manage main app structure (Header, Sidebar, Main content via Outlet)
 const MainLayout = () => {
@@ -34,30 +62,32 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<MainLayout />}> {/* Use MainLayout as the base for all views */}
-            <Route index element={<DashboardView />} /> {/* Default view for / */}
-            <Route path="transactions" element={<TransactionsView />} />
-            <Route path="reports" element={<ReportsView />} />
-            <Route path="goals" element={
-              <div className="glass rounded-2xl p-8 text-center">
-                <h2 className="text-2xl font-bold mb-2">Metas Financieras</h2>
-                <p className="text-muted-foreground">Próximamente: Establece y rastrea tus metas de ahorro</p>
-              </div>
-            } />
-            <Route path="ai" element={<AIAssistantView />} />
-            <Route path="data-management" element={<DataManagementView />} />
-            <Route path="settings" element={
-              <div className="glass rounded-2xl p-8 text-center">
-                <h2 className="text-2xl font-bold mb-2">Ajustes</h2>
-                <p className="text-muted-foreground">Próximamente: Personaliza tu experiencia</p>
-              </div>
-            } />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <ErrorBoundary> {/* Wrap BrowserRouter with ErrorBoundary */}
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<MainLayout />}> {/* Use MainLayout as the base for all views */}
+              <Route index element={<DashboardView />} /> {/* Default view for / */}
+              <Route path="transactions" element={<TransactionsView />} />
+              <Route path="reports" element={<ReportsView />} />
+              <Route path="goals" element={
+                <div className="glass rounded-2xl p-8 text-center">
+                  <h2 className="text-2xl font-bold mb-2">Metas Financieras</h2>
+                  <p className="text-muted-foreground">Próximamente: Establece y rastrea tus metas de ahorro</p>
+                </div>
+              } />
+              <Route path="ai" element={<AIAssistantView />} />
+              <Route path="data-management" element={<DataManagementView />} />
+              <Route path="settings" element={
+                <div className="glass rounded-2xl p-8 text-center">
+                  <h2 className="text-2xl font-bold mb-2">Ajustes</h2>
+                  <p className="text-muted-foreground">Próximamente: Personaliza tu experiencia</p>
+                </div>
+              } />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </ErrorBoundary>
     </TooltipProvider>
   </QueryClientProvider>
 );
