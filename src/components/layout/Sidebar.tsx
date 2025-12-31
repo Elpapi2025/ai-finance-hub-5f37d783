@@ -12,8 +12,7 @@ import {
 
 interface SidebarProps {
   isOpen: boolean;
-  currentView: string;
-  onViewChange: (view: string) => void;
+  onViewChange: () => void; // Simplified to just close sidebar
 }
 
 const menuItems = [
@@ -26,14 +25,14 @@ const menuItems = [
   { id: 'settings', label: 'Ajustes', icon: Settings, path: '/settings' },
 ];
 
-export function Sidebar({ isOpen, currentView, onViewChange }: SidebarProps) {
+export function Sidebar({ isOpen, onViewChange }: SidebarProps) {
   return (
     <>
       {/* Mobile Overlay */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => onViewChange(currentView)}
+          onClick={onViewChange} // Simplified
         />
       )}
 
@@ -49,8 +48,6 @@ export function Sidebar({ isOpen, currentView, onViewChange }: SidebarProps) {
         <nav className="p-4 space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            // The active state will now be handled by NavLink's isActive prop
-            // const isActive = currentView === item.id; // No longer needed
             
             return (
               <NavLink
@@ -64,7 +61,7 @@ export function Sidebar({ isOpen, currentView, onViewChange }: SidebarProps) {
                       : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
                   )
                 }
-                onClick={() => onViewChange(item.id)} // Keep for mobile sidebar closing
+                onClick={onViewChange} // Keep for mobile sidebar closing
               >
                 {({ isActive }) => (
                   <>
