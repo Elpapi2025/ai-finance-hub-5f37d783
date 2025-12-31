@@ -1,31 +1,29 @@
-import React, { Component, useState } from "react"; // Add useState
+import React, { Component, useState, Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Outlet, useLocation } from "react-router-dom";
-// import Index from "./pages/Index"; // Removed Index import
 import NotFound from "./pages/NotFound";
 import { useFinance } from "./hooks/useFinance";
-// import { DebugConsole } from "./components/DebugConsole"; // REMOVED DebugConsole import
 
 // Layout components
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { AddTransactionModal } from '@/components/finance/AddTransactionModal';
-import { cn } from '@/lib/utils'; // Import cn
-import { Transaction } from '@/types/finance'; // Import Transaction type for onAdd prop
-
-// Import all view components
-import { DashboardView } from "./components/views/DashboardView";
-import { TransactionsView } from "./components/views/TransactionsView";
-import { ReportsView } from "./components/views/ReportsView";
-import { AIAssistantView } from "./components/views/AIAssistantView";
-import { DataManagementView } from "./components/views/DataManagementView";
-import { FinanceContextType } from "./types/finance"; // Import FinanceContextType
+import { cn } from '@/lib/utils';
+import { Transaction } from '@/types/finance';
+import { FinanceContextType } from "./types/finance";
 
 const queryClient = new QueryClient();
+
+// Lazy-loaded view components
+const DashboardView = lazy(() => import("./components/views/DashboardView").then(module => ({ default: module.DashboardView })));
+const TransactionsView = lazy(() => import("./components/views/TransactionsView").then(module => ({ default: module.TransactionsView })));
+const ReportsView = lazy(() => import("./components/views/ReportsView").then(module => ({ default: module.ReportsView })));
+const AIAssistantView = lazy(() => import("./components/views/AIAssistantView").then(module => ({ default: module.AIAssistantView })));
+const DataManagementView = lazy(() => import("./components/views/DataManagementView").then(module => ({ default: module.DataManagementView })));
 
 // Error Boundary Component
 class ErrorBoundary extends Component {
@@ -57,10 +55,9 @@ class ErrorBoundary extends Component {
 const MainLayout = () => {
   const location = useLocation();
   const currentPath = location.pathname;
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // State for sidebar
-  const [isModalOpen, setIsModalOpen] = useState(false); // State for AddTransactionModal
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Get all necessary finance data here
   const {
     transactions,
     summary,
@@ -73,7 +70,6 @@ const MainLayout = () => {
     importFinanceData,
   } = useFinance();
 
-  // Create a context object to pass finance data down to nested routes
   const financeContext: FinanceContextType = React.useMemo(() => ({
     transactions,
     summary,
@@ -86,19 +82,18 @@ const MainLayout = () => {
     importFinanceData,
   }), [transactions, summary, addTransaction, deleteTransaction, expensesByCategory, isLoading, clearAllFinanceData, exportFinanceData, importFinanceData]);
 
-  console.log("MainLayout: financeContext before passing to Outlet:", financeContext); // Debug log
+  console.log("MainLayout: financeContext before passing to Outlet:", financeContext);
 
   const handleMenuToggle = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const handleViewChange = () => { // Simplified to just close sidebar/mobile nav
+  const handleViewChange = () => {
     setIsSidebarOpen(false);
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
@@ -121,20 +116,27 @@ const MainLayout = () => {
         )}
       >
         <div className="max-w-7xl mx-auto">
-          <Outlet context={financeContext} /> {/* Renders the matched child route component */}
+          <Suspense fallback={
+            <div className="glass rounded-2xl p-8 text-center animate-pulse">
+              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-primary/20" />
+              <p className="text-muted-foreground">Cargando vista...</p>
+            </div>
+          }>
+            <Outlet context={financeContext} />
+          </Suspense>
         </div>
       </main>
 
       <MobileNav
-        currentView={currentPath} // Pass currentPath for MobileNav
-        onViewChange={handleViewChange} // Close mobile nav on click
+        currentView={currentPath}
+        onViewChange={handleViewChange}
         onAddClick={() => setIsModalOpen(true)}
       />
 
       <AddTransactionModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onAdd={addTransaction} // Pass addTransaction directly from MainLayout
+        onAdd={addTransaction}
       />
     </div>
   );
