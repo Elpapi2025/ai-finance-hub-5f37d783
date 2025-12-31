@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route, Outlet, useLocation } from "react-router-
 // import Index from "./pages/Index"; // Removed Index import
 import NotFound from "./pages/NotFound";
 import { useFinance } from "./hooks/useFinance";
-import { DebugConsole } from "./components/DebugConsole"; // Import DebugConsole
+// import { DebugConsole } from "./components/DebugConsole"; // REMOVED DebugConsole import
 
 // Layout components
 import { Header } from '@/components/layout/Header';
@@ -171,7 +171,6 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </ErrorBoundary>
-      <DebugConsole /> {/* Integrate DebugConsole here */}
     </TooltipProvider>
   </QueryClientProvider>
 );
