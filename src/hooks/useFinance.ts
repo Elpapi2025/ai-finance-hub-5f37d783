@@ -35,7 +35,7 @@ export function useFinance() {
       setTransactions(data);
     } catch (error) {
       console.error('Error fetching transactions:', error);
-      toast.error('Error al cargar transacciones');
+      toast.error(`Error al cargar transacciones: ${(error as Error).message}`);
     } finally {
       setIsLoading(false);
     }
