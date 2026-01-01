@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
-type OnboardingStep = 'welcome' | 'terms' | 'tutorial' | 'finish';
+type OnboardingStep = 'welcome' | 'terms' | 'tutorial';
 
 interface OnboardingViewProps {
   onComplete: () => void;
@@ -13,12 +13,13 @@ interface OnboardingViewProps {
 export function OnboardingView({ onComplete }: OnboardingViewProps) {
   const [step, setStep] = useState<OnboardingStep>('welcome');
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const animationKey = `step-${step}`;
 
   const renderStep = () => {
     switch (step) {
       case 'welcome':
         return (
-          <Card>
+          <Card key={animationKey} className="animate-in fade-in slide-in-from-bottom-5 duration-500">
             <CardHeader>
               <CardTitle>Bienvenido a AI Finance Hub</CardTitle>
             </CardHeader>
@@ -32,7 +33,7 @@ export function OnboardingView({ onComplete }: OnboardingViewProps) {
         );
       case 'terms':
         return (
-          <Card>
+          <Card key={animationKey} className="animate-in fade-in slide-in-from-bottom-5 duration-500">
             <CardHeader>
               <CardTitle>Términos y Condiciones</CardTitle>
             </CardHeader>
@@ -53,7 +54,7 @@ export function OnboardingView({ onComplete }: OnboardingViewProps) {
         );
       case 'tutorial':
         return (
-          <Card>
+          <Card key={animationKey} className="animate-in fade-in slide-in-from-bottom-5 duration-500">
             <CardHeader>
               <CardTitle>¿Cómo funciona?</CardTitle>
             </CardHeader>
@@ -64,14 +65,10 @@ export function OnboardingView({ onComplete }: OnboardingViewProps) {
             </CardContent>
             <CardFooter className="flex justify-between">
                <Button variant="outline" onClick={() => setStep('terms')}>Anterior</Button>
-              <Button onClick={() => setStep('finish')}>Comenzar</Button>
+              <Button onClick={onComplete}>Comenzar</Button>
             </CardFooter>
           </Card>
         );
-       case 'finish':
-         // This case will trigger the onComplete and the component will unmount.
-         // We can call onComplete directly in the 'tutorial' step's button.
-         return null;
     }
   };
 
