@@ -11,7 +11,7 @@ import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 interface AddTransactionModalProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (transaction: Omit<Transaction, 'id' | 'createdAt'>) => void;
+  onAdd: (transaction: Omit<Transaction, 'id'>) => void;
 }
 
 export function AddTransactionModal({ open, onClose, onAdd }: AddTransactionModalProps) {
@@ -30,8 +30,8 @@ export function AddTransactionModal({ open, onClose, onAdd }: AddTransactionModa
       type,
       amount: parseFloat(amount),
       category,
-      description,
-      date: new Date(),
+      name: description,
+      date: new Date().toISOString(),
     });
 
     setAmount('');

@@ -44,7 +44,7 @@ export function MobileNav({ currentView, onViewChange, onAddClick }: MobileNavPr
         }
       >
         <Icon className="w-5 h-5" />
-        <span className="text-xs font-medium">{item.label}</span>
+        <span className="text-xs font-medium truncate">{item.label}</span>
       </NavLink>
     );
   };
