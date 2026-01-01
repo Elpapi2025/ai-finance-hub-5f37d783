@@ -29,7 +29,7 @@ export function TransactionsView() { // No props needed here anymore
   const filteredTransactions = transactions
     .filter((t) => {
       if (filter !== 'all' && t.type !== filter) return false;
-      if (search && !t.description?.toLowerCase().includes(search.toLowerCase())) return false; // Use t.description
+      if (search && !t.name.toLowerCase().includes(search.toLowerCase())) return false; // Use t.name
       return true;
     })
     .sort((a, b) => {
@@ -121,7 +121,7 @@ export function TransactionsView() { // No props needed here anymore
                 {getCategoryIcon(transaction.category)}
               </div>
               <div>
-                <p className="font-medium">{transaction.description}</p> {/* Use t.description */}
+                <p className="font-medium">{transaction.name}</p> {/* Use t.name */}
                 <p className="text-sm text-muted-foreground">
                   {transaction.category} •{' '}
                   {format(new Date(transaction.date), "d 'de' MMMM, yyyy", { locale: es })} {/* Parse date string */}
