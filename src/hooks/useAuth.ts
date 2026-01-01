@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
 
@@ -7,6 +7,7 @@ export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     const getSession = async () => {
@@ -23,8 +24,10 @@ export const useAuth = () => {
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+        startTransition(() => {
+          setSession(session);
+          setUser(session?.user ?? null);
+        });
         setLoading(false);
       }
     );
@@ -37,7 +40,7 @@ export const useAuth = () => {
   return {
     user,
     session,
-    loading,
+    loading: loading || isPending,
     login: (email, password) => supabase.auth.signInWithPassword({ email, password }),
     logout: () => supabase.auth.signOut(),
     register: (email, password) => supabase.auth.signUp({ email, password }),

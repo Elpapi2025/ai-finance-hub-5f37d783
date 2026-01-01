@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Filter, ArrowUpDown } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, PlusCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { FinanceContextType } from '@/types/finance'; // Import FinanceContextType
@@ -21,7 +21,7 @@ export function TransactionsView() { // No props needed here anymore
     );
   }
 
-  const { transactions, deleteTransaction, isLoading } = context;
+  const { transactions, deleteTransaction, isLoading, openModal } = context;
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
@@ -29,7 +29,7 @@ export function TransactionsView() { // No props needed here anymore
   const filteredTransactions = transactions
     .filter((t) => {
       if (filter !== 'all' && t.type !== filter) return false;
-      if (search && !t.name.toLowerCase().includes(search.toLowerCase())) return false; // Use t.name
+      if (search && !t.description?.toLowerCase().includes(search.toLowerCase())) return false; // Use t.description
       return true;
     })
     .sort((a, b) => {
@@ -56,11 +56,17 @@ export function TransactionsView() { // No props needed here anymore
 
   return (
     <div className="space-y-6 pb-24 lg:pb-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold">Transacciones</h1>
-        <p className="text-muted-foreground mt-1">
-          Historial completo de tus movimientos
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">Transacciones</h1>
+          <p className="text-muted-foreground mt-1">
+            Historial completo de tus movimientos
+          </p>
+        </div>
+        <Button onClick={openModal}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Añadir Transacción
+        </Button>
       </div>
 
       {/* Filters */}
@@ -115,7 +121,7 @@ export function TransactionsView() { // No props needed here anymore
                 {getCategoryIcon(transaction.category)}
               </div>
               <div>
-                <p className="font-medium">{transaction.name}</p> {/* Use t.name */}
+                <p className="font-medium">{transaction.description}</p> {/* Use t.description */}
                 <p className="text-sm text-muted-foreground">
                   {transaction.category} •{' '}
                   {format(new Date(transaction.date), "d 'de' MMMM, yyyy", { locale: es })} {/* Parse date string */}
