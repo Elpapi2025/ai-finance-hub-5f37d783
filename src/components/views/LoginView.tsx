@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -15,10 +15,13 @@ export function LoginView() {
   const [isRegisterView, setIsRegisterView] = useState(false);
   const { login, register, user } = useAuthContext();
   const navigate = useNavigate();
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
     if (user) {
-      navigate('/');
+      startTransition(() => {
+        navigate('/');
+      });
     }
   }, [user, navigate]);
 
