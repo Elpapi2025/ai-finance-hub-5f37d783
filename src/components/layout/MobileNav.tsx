@@ -53,6 +53,7 @@ export function MobileNav({ currentView, onViewChange, onAddClick }: MobileNavPr
               key={item.id}
               to={item.path}
               onClick={onViewChange} // Close mobile nav on click
+              pendingClassName="opacity-75"
               className={({ isActive }) =>
                 cn(
                   'flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors',

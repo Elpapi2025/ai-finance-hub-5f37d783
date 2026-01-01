@@ -58,7 +58,6 @@ class ErrorBoundary extends Component<React.PropsWithChildren<{}>> {
 const MainLayout = () => {
   const location = useLocation();
   const currentPath = location.pathname;
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const financeHook = useFinance();
@@ -68,12 +67,8 @@ const MainLayout = () => {
     openModal: () => setIsModalOpen(true),
   }), [financeHook]);
 
-  const handleMenuToggle = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
   const handleViewChange = () => {
-    setIsSidebarOpen(false);
+    // No-op, sidebar is no longer toggled
   };
 
   return (
@@ -83,13 +78,9 @@ const MainLayout = () => {
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
       </div>
 
-      <Header
-        onMenuToggle={handleMenuToggle}
-        isMenuOpen={isSidebarOpen}
-      />
+      <Header />
 
       <Sidebar
-        isOpen={isSidebarOpen}
         onViewChange={handleViewChange}
       />
 

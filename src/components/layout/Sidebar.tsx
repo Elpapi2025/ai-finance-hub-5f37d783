@@ -11,8 +11,7 @@ import {
 } from 'lucide-react';
 
 interface SidebarProps {
-  isOpen: boolean;
-  onViewChange: () => void; // Simplified to just close sidebar
+  onViewChange: () => void;
 }
 
 const menuItems = [
@@ -25,24 +24,14 @@ const menuItems = [
   { id: 'settings', label: 'Ajustes', icon: Settings, path: '/settings' },
 ];
 
-export function Sidebar({ isOpen, onViewChange }: SidebarProps) {
+export function Sidebar({ onViewChange }: SidebarProps) {
   return (
     <>
-      {/* Mobile Overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
-          onClick={onViewChange} // Simplified
-        />
-      )}
-
-      {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-sidebar border-r border-sidebar-border z-40',
+          'fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-sidebar border-r border-sidebar-border z-30', // z-index reduced
           'transition-transform duration-300 ease-in-out',
-          'lg:translate-x-0',
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          '-translate-x-full lg:translate-x-0' // Hidden on mobile, visible on desktop
         )}
       >
         <nav className="p-4 space-y-2">
@@ -53,6 +42,7 @@ export function Sidebar({ isOpen, onViewChange }: SidebarProps) {
               <NavLink
                 key={item.id}
                 to={item.path}
+                pendingClassName="opacity-75"
                 className={({ isActive }) =>
                   cn(
                     'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
@@ -61,7 +51,7 @@ export function Sidebar({ isOpen, onViewChange }: SidebarProps) {
                       : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
                   )
                 }
-                onClick={onViewChange} // Keep for mobile sidebar closing
+                onClick={onViewChange}
               >
                 {({ isActive }) => (
                   <>
