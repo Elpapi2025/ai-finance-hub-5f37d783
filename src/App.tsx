@@ -24,6 +24,8 @@ const TransactionsView = lazy(() => import("./components/views/TransactionsView"
 const ReportsView = lazy(() => import("./components/views/ReportsView").then(module => ({ default: module.ReportsView })));
 const AIAssistantView = lazy(() => import("./components/views/AIAssistantView").then(module => ({ default: module.AIAssistantView })));
 const DataManagementView = lazy(() => import("./components/views/DataManagementView").then(module => ({ default: module.DataManagementView })));
+const LoginView = lazy(() => import("./components/views/LoginView").then(module => ({ default: module.LoginView })));
+
 
 // Error Boundary Component
 class ErrorBoundary extends Component {
@@ -80,9 +82,9 @@ const MainLayout = () => {
     clearAllFinanceData,
     exportFinanceData,
     importFinanceData,
+    openModal: () => setIsModalOpen(true),
   }), [transactions, summary, addTransaction, deleteTransaction, expensesByCategory, isLoading, clearAllFinanceData, exportFinanceData, importFinanceData]);
 
-  console.log("MainLayout: financeContext before passing to Outlet:", financeContext);
 
   const handleMenuToggle = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -150,8 +152,9 @@ const App = () => (
       <ErrorBoundary>
         <BrowserRouter>
           <Routes>
+            <Route path="/login" element={<LoginView />} />
             <Route path="/" element={<MainLayout />}>
-              <Route index element={<DashboardView onAddClick={() => setIsModalOpen(true)} />} /> {/* Pass onAddClick here */}
+              <Route index element={<DashboardView />} />
               <Route path="transactions" element={<TransactionsView />} />
               <Route path="reports" element={<ReportsView />} />
               <Route path="goals" element={

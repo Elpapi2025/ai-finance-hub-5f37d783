@@ -1,18 +1,37 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Transaction, FinanceSummary } from '@/types/finance';
-import { initializeDatabase, addTransaction as sqliteAddTransaction, getTransactions as sqliteGetTransactions, deleteTransaction as sqliteDeleteTransaction, clearAllTransactions as sqliteClearAllTransactions, exportTransactionsToJson as sqliteExportTransactionsToJson, importTransactionsFromJson as sqliteImportTransactionsFromJson } from '@/services/sqliteService';
+import { 
+  initializeDatabase, 
+  addTransaction as sqliteAddTransaction, 
+  getTransactions as sqliteGetTransactions, 
+  deleteTransaction as sqliteDeleteTransaction,
+  clearAllTransactions as sqliteClearAllTransactions,
+  exportTransactionsToJson as sqliteExportTransactionsToJson,
+  importTransactionsFromJson as sqliteImportTransactionsFromJson
+} from '@/services/sqliteService';
+import * as supabaseApi from '@/services/supabaseApi';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { v4 as uuidv4 } from 'uuid';
 
 export function useFinance() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { user, loading: authLoading } = useAuthContext();
 
   const fetchTransactions = useCallback(async () => {
+    if (authLoading) return; // Wait until auth state is confirmed
+    
     try {
       setIsLoading(true);
-      await initializeDatabase(); // Initialize DB
-      const data = await sqliteGetTransactions(); // Use sqlite service
+      let data: Transaction[];
+      if (user) {
+        // User is logged in, use Supabase
+        data = await supabaseApi.getTransactions();
+      } else {
+        // User is logged out, use SQLite
+        await initializeDatabase();
+        data = await sqliteGetTransactions();
+      }
       setTransactions(data);
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -20,9 +39,54 @@ export function useFinance() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user, authLoading]);
 
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+    try {
+      if (user) {
+        // Supabase handles ID generation and returns the new transaction
+        const newTransaction = await supabaseApi.addTransaction(transaction);
+        setTransactions(prev => [newTransaction, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      } else {
+        const newSqliteTransaction = { ...transaction, id: crypto.randomUUID() };
+        await sqliteAddTransaction(newSqliteTransaction);
+        setTransactions(prev => [newSqliteTransaction, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      }
+      toast.success('Transacción agregada');
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      toast.error('Error al agregar transacción');
+    }
+  };
+
+  const deleteTransaction = async (id: string) => {
+    try {
+      // Optimistic deletion from UI
+      setTransactions(prev => prev.filter(t => t.id !== id));
+      
+      if (user) {
+        await supabaseApi.deleteTransaction(id);
+      } else {
+        await sqliteDeleteTransaction(id);
+      }
+      toast.success('Transacción eliminada');
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      // Revert optimistic deletion on error
+      fetchTransactions(); 
+      toast.error('Error al eliminar transacción');
+    }
+  };
+  
   const clearAllFinanceData = useCallback(async () => {
+    if (user) {
+      toast.info('Esta función solo está disponible en modo local.');
+      return;
+    }
     try {
       setIsLoading(true);
       await sqliteClearAllTransactions();
@@ -34,9 +98,13 @@ export function useFinance() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user]);
 
   const exportFinanceData = useCallback(async (): Promise<string | undefined> => {
+    if (user) {
+      toast.info('Esta función solo está disponible en modo local.');
+      return;
+    }
     try {
       setIsLoading(true);
       const jsonData = await sqliteExportTransactionsToJson();
@@ -49,9 +117,13 @@ export function useFinance() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user]);
 
   const importFinanceData = useCallback(async (jsonData: string) => {
+    if (user) {
+      toast.info('Esta función solo está disponible en modo local.');
+      return;
+    }
     try {
       setIsLoading(true);
       await sqliteImportTransactionsFromJson(jsonData);
@@ -63,57 +135,15 @@ export function useFinance() {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchTransactions]);
-
-  useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+  }, [user, fetchTransactions]);
 
   const summary = useMemo<FinanceSummary>(() => {
-    const totalIncome = transactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
-    
-    const totalExpenses = transactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
-    
+    const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
     const balance = totalIncome - totalExpenses;
     const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
-
-    return {
-      totalIncome,
-      totalExpenses,
-      balance,
-      savingsRate,
-    };
+    return { totalIncome, totalExpenses, balance, savingsRate };
   }, [transactions]);
-
-  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
-    try {
-      const newTransaction: Transaction = {
-        ...transaction,
-        id: uuidv4(), // Generate a UUID for the id
-      };
-      await sqliteAddTransaction(newTransaction);
-      setTransactions(prev => [newTransaction, ...prev]);
-      toast.success('Transacción agregada');
-    } catch (error) {
-      console.error('Error adding transaction:', error);
-      toast.error('Error al agregar transacción');
-    }
-  };
-
-  const deleteTransaction = async (id: string) => {
-    try {
-      await sqliteDeleteTransaction(id);
-      setTransactions(prev => prev.filter(t => t.id !== id));
-      toast.success('Transacción eliminada');
-    } catch (error) {
-      console.error('Error deleting transaction:', error);
-      toast.error('Error al eliminar transacción');
-    }
-  };
 
   const expensesByCategory = useMemo(() => {
     const expenses = transactions.filter(t => t.type === 'expense');
@@ -121,11 +151,7 @@ export function useFinance() {
       acc[t.category] = (acc[t.category] || 0) + t.amount;
       return acc;
     }, {} as Record<string, number>);
-    
-    return Object.entries(grouped).map(([name, value]) => ({
-      name,
-      value,
-    }));
+    return Object.entries(grouped).map(([name, value]) => ({ name, value }));
   }, [transactions]);
 
   return {
@@ -134,10 +160,11 @@ export function useFinance() {
     addTransaction,
     deleteTransaction,
     expensesByCategory,
-    isLoading,
+    isLoading: isLoading || authLoading,
     refetch: fetchTransactions,
     clearAllFinanceData,
     exportFinanceData,
     importFinanceData,
   };
 }
+
