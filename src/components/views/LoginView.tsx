@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,16 +12,25 @@ export function LoginView() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, register } = useAuthContext();
+  const { login, register, user } = useAuthContext();
   const navigate = useNavigate();
 
-  const handleResponse = (error: any, message: string) => {
+  // This effect will run when the user state changes.
+  // If a user object becomes available, it means login was successful,
+  // and we can safely navigate to the home page.
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
+  const handleResponse = (error: any, successMessage?: string) => {
     setIsSubmitting(false);
     if (error) {
       toast.error(error.message);
-    } else {
-      toast.success(message);
-      navigate('/');
+    } else if (successMessage) {
+      toast.success(successMessage);
+      // We no longer navigate here. The useEffect will handle it.
     }
   };
 
@@ -29,7 +38,14 @@ export function LoginView() {
     e.preventDefault();
     setIsSubmitting(true);
     const { error } = await login(email, password);
-    handleResponse(error, '¡Has iniciado sesión!');
+    // On success, the onAuthStateChange listener will update the 'user' context,
+    // which will trigger the useEffect hook to navigate.
+    if (error) {
+      handleResponse(error);
+    } else {
+        // We don't pass a success message here, to avoid a toast before navigation.
+        // The UI will show a loading state until navigation happens.
+    }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -79,7 +95,7 @@ export function LoginView() {
             Registrarse
           </Button>
           <Button onClick={handleLogin} disabled={isSubmitting}>
-            {isSubmitting ? 'Procesando...' : 'Iniciar Sesión'}
+            {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </Button>
         </CardFooter>
       </Card>
