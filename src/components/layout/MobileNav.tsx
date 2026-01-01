@@ -28,55 +28,52 @@ const navItems = [
 ];
 
 export function MobileNav({ currentView, onViewChange, onAddClick }: MobileNavProps) {
+  const renderNavLink = (item: typeof navItems[0]) => {
+    const Icon = item.icon;
+    return (
+      <NavLink
+        key={item.id}
+        to={item.path}
+        onClick={onViewChange}
+        pendingClassName="opacity-75"
+        className={({ isActive }) =>
+          cn(
+            'flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors',
+            isActive ? 'text-primary' : 'text-muted-foreground'
+          )
+        }
+      >
+        <Icon className="w-5 h-5" />
+        <span className="text-xs font-medium">{item.label}</span>
+      </NavLink>
+    );
+  };
+
+  const leftNavItems = navItems.slice(0, 3); // First 3 items
+  const rightNavItems = navItems.slice(3); // Remaining 4 items
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden glass border-t border-border/50">
-      <div className="flex items-center justify-around h-16 px-2">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          
-          if (item.id === 'add') { // Special case for the Add button
-            return (
-              <button
-                key={item.id}
-                onClick={onAddClick}
-                className="flex flex-col items-center justify-center -mt-6"
-              >
-                <div className="p-4 rounded-full bg-primary glow hover:scale-110 transition-transform">
-                  <Icon className="w-6 h-6 text-primary-foreground" />
-                </div>
-              </button>
-            );
-          }
-          
-          return (
-            <NavLink
-              key={item.id}
-              to={item.path}
-              onClick={onViewChange} // Close mobile nav on click
-              pendingClassName="opacity-75"
-              className={({ isActive }) =>
-                cn(
-                  'flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors',
-                  isActive ? 'text-primary' : 'text-muted-foreground'
-                )
-              }
-            >
-              <Icon className="w-5 h-5" />
-              <span className="text-xs font-medium">{item.label}</span>
-            </NavLink>
-          );
-        })}
-        {/* Placeholder for the central Add button if it's not one of the navItems */}
-        {navItems.some(item => item.id === 'add') ? null : (
-          <button
-            onClick={onAddClick}
-            className="flex flex-col items-center justify-center -mt-6"
-          >
-            <div className="p-4 rounded-full bg-primary glow hover:scale-110 transition-transform">
-              <Plus className="w-6 h-6 text-primary-foreground" />
-            </div>
-          </button>
-        )}
+      <div className="relative flex items-center justify-between h-16 px-2">
+        {/* Grupo Izquierdo de elementos de navegación */}
+        <div className="flex justify-evenly flex-1 min-w-0">
+          {leftNavItems.map(renderNavLink)}
+        </div>
+
+        {/* Botón Central de Añadir */}
+        <button
+          onClick={onAddClick}
+          className="absolute left-1/2 -translate-x-1/2 -mt-6 z-50" // Asegurar que esté por encima de todo
+        >
+          <div className="p-4 rounded-full bg-primary glow hover:scale-110 transition-transform">
+            <Plus className="w-6 h-6 text-primary-foreground" />
+          </div>
+        </button>
+
+        {/* Grupo Derecho de elementos de navegación */}
+        <div className="flex justify-evenly flex-1 min-w-0">
+          {rightNavItems.map(renderNavLink)}
+        </div>
       </div>
     </nav>
   );

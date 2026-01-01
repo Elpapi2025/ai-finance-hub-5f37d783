@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { ArrowLeft } from 'lucide-react'; // Importar el icono
 
 export function LoginView() {
   const [email, setEmail] = useState('');
@@ -49,10 +50,22 @@ export function LoginView() {
     }
   };
 
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
+        <CardHeader className="text-center relative"> {/* Añadir 'relative' para posicionamiento absoluto */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleGoBack}
+            className="absolute left-4 top-4" // Posicionar arriba a la izquierda
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
           <CardTitle className="text-2xl">{isRegisterView ? 'Crear Cuenta' : 'Iniciar Sesión'}</CardTitle>
           <CardDescription>
             {isRegisterView ? 'Ingresa tus datos para registrarte.' : 'Bienvenido de nuevo.'}
