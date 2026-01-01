@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { FinanceSummary, Transaction, FinanceContextType } from '@/types/finance'; // Import FinanceContextType
 import { useOutletContext } from 'react-router-dom'; // Import useOutletContext
 
-export function DashboardView() { // No props needed here anymore
+export function DashboardView({ onAddClick }: { onAddClick: () => void }) { // Accept onAddClick as prop
   const context = useOutletContext<FinanceContextType>(); // Get entire context
   console.log("DashboardView: Context from useOutletContext is", context); // Debug log
 
@@ -52,7 +52,7 @@ export function DashboardView() { // No props needed here anymore
             Aquí está el resumen de tus finanzas
           </p>
         </div>
-        <Button onClick={() => { /* This addTransaction is for the modal, not directly here */ }} className="hidden lg:flex">
+        <Button onClick={onAddClick} className="hidden lg:flex"> {/* Use the onAddClick prop */}
           <Plus className="w-4 h-4 mr-2" />
           Nueva Transacción
         </Button>

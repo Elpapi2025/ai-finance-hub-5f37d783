@@ -151,7 +151,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<MainLayout />}>
-              <Route index element={<DashboardView />} />
+              <Route index element={<DashboardView onAddClick={() => setIsModalOpen(true)} />} /> {/* Pass onAddClick here */}
               <Route path="transactions" element={<TransactionsView />} />
               <Route path="reports" element={<ReportsView />} />
               <Route path="goals" element={
