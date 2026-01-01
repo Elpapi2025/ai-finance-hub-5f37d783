@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'; // Import NavLink
+import { NavLink } from '@/components/NavLink'; // Import NavLink
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
