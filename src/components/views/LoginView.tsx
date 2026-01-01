@@ -12,12 +12,10 @@ export function LoginView() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRegisterView, setIsRegisterView] = useState(false);
   const { login, register, user } = useAuthContext();
   const navigate = useNavigate();
 
-  // This effect will run when the user state changes.
-  // If a user object becomes available, it means login was successful,
-  // and we can safely navigate to the home page.
   useEffect(() => {
     if (user) {
       navigate('/');
@@ -30,74 +28,80 @@ export function LoginView() {
       toast.error(error.message);
     } else if (successMessage) {
       toast.success(successMessage);
-      // We no longer navigate here. The useEffect will handle it.
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const { error } = await login(email, password);
-    // On success, the onAuthStateChange listener will update the 'user' context,
-    // which will trigger the useEffect hook to navigate.
-    if (error) {
-      handleResponse(error);
+
+    if (isRegisterView) {
+      const { error } = await register(email, password);
+      handleResponse(error, '¡Te has registrado con éxito! Revisa tu correo para la confirmación.');
     } else {
-        // We don't pass a success message here, to avoid a toast before navigation.
-        // The UI will show a loading state until navigation happens.
+      const { error } = await login(email, password);
+      if (error) {
+        handleResponse(error);
+      }
     }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    const { error } = await register(email, password);
-    handleResponse(error, '¡Te has registrado con éxito! Revisa tu correo para la confirmación.');
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Bienvenido</CardTitle>
-          <CardDescription>Inicia sesión para guardar tus datos en la nube o regístrate.</CardDescription>
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">{isRegisterView ? 'Crear Cuenta' : 'Iniciar Sesión'}</CardTitle>
+          <CardDescription>
+            {isRegisterView ? 'Ingresa tus datos para registrarte.' : 'Bienvenido de nuevo.'}
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form>
-            <div className="grid w-full items-center gap-4">
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="tu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isSubmitting}
-                />
-              </div>
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="password">Contraseña</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Tu contraseña"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isSubmitting}
-                />
-              </div>
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="tu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isSubmitting}
+                required
+              />
             </div>
-          </form>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={handleRegister} disabled={isSubmitting}>
-            Registrarse
-          </Button>
-          <Button onClick={handleLogin} disabled={isSubmitting}>
-            {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-          </Button>
-        </CardFooter>
+            <div className="space-y-2">
+              <Label htmlFor="password">Contraseña</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isSubmitting}
+                required
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-4">
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting
+                ? 'Procesando...'
+                : isRegisterView
+                ? 'Registrarse'
+                : 'Iniciar Sesión'}
+            </Button>
+            <Button
+              type="button"
+              variant="link"
+              className="text-muted-foreground"
+              onClick={() => setIsRegisterView(!isRegisterView)}
+            >
+              {isRegisterView
+                ? '¿Ya tienes una cuenta? Inicia sesión'
+                : '¿No tienes una cuenta? Regístrate'}
+            </Button>
+          </CardFooter>
+        </form>
       </Card>
     </div>
   );
