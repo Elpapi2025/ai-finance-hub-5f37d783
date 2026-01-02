@@ -6,23 +6,24 @@ import { AppWrapper } from "./AppWrapper.tsx";
 import { AuthProvider } from "./contexts/AuthContext.tsx";
 import "./index.css";
 
-// Initialize SQLite web store for web platform
-if (Capacitor.getPlatform() === 'web') {
-  console.log("Initializing SQLite web store...");
-  window.customElements.define('jeep-sqlite', JeepSqlite);
-  const initWebStore = async () => {
+const initializeAndRender = async () => {
+  if (Capacitor.getPlatform() === 'web') {
+    console.log("Initializing SQLite web store...");
+    window.customElements.define('jeep-sqlite', JeepSqlite);
     try {
-      await CapacitorSQLite.initWebStore();
+      await CapacitorSQLite.initWebStore(); // Await here
       console.log("SQLite web store initialized successfully.");
     } catch (err) {
       console.error("Error initializing SQLite web store", err);
+      // Podrías mostrar un mensaje de error al usuario aquí si la inicialización falla.
     }
-  };
-  initWebStore();
-}
+  }
 
-createRoot(document.getElementById("root")!).render(
-  <AuthProvider>
-    <AppWrapper />
-  </AuthProvider>
-);
+  createRoot(document.getElementById("root")!).render(
+    <AuthProvider>
+      <AppWrapper />
+    </AuthProvider>
+  );
+};
+
+initializeAndRender();
