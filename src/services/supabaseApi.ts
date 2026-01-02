@@ -79,7 +79,30 @@ export async function addTransactions(transactions: Omit<Transaction, 'id'>[]): 
     throw error;
   }
 
-  return newTransactions as Transaction[];
+  return newTransactions as Transaction;
+}
+
+/**
+ * Clears all transactions for the currently authenticated user from Supabase.
+ * RLS policy should ensure a user can only clear their own transactions.
+ */
+export async function clearUserTransactions(): Promise<void> {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error('User not authenticated. Cannot clear transactions.');
+  }
+
+  // Delete all transactions for the current user
+  const { error } = await supabase
+    .from('transactions')
+    .delete()
+    .eq('user_id', user.id); // Assuming RLS allows this based on user_id
+
+  if (error) {
+    console.error('Error clearing user transactions from Supabase:', error);
+    throw error;
+  }
 }
 
 /**

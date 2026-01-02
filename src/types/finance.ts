@@ -40,4 +40,6 @@ export interface FinanceContextType {
   clearAllFinanceData: () => Promise<void>;
   exportFinanceData: () => Promise<string | undefined>;
   importFinanceData: (jsonData: string) => Promise<void>;
+  syncToCloud: () => Promise<void>;
+  downloadBackupFromCloud: () => Promise<void>;
 }

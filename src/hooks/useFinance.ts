@@ -1,17 +1,21 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { Transaction, FinanceSummary } from '@/types/finance';
-import { 
-  initializeDatabase, 
-  addTransaction as sqliteAddTransaction, 
-  getTransactions as sqliteGetTransactions, 
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import {
+  Transaction,
+  FinanceSummary,
+  FinanceContextType,
+} from "@/types/finance";
+import {
+  initializeDatabase,
+  addTransaction as sqliteAddTransaction,
+  getTransactions as sqliteGetTransactions,
   deleteTransaction as sqliteDeleteTransaction,
   clearAllTransactions as sqliteClearAllTransactions,
   exportTransactionsToJson as sqliteExportTransactionsToJson,
-  importTransactionsFromJson as sqliteImportTransactionsFromJson
-} from '@/services/sqliteService';
-import * as supabaseApi from '@/services/supabaseApi';
-import { useAuthContext } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
+  importTransactionsFromJson as sqliteImportTransactionsFromJson,
+} from "@/services/sqliteService";
+import * as supabaseApi from "@/services/supabaseApi";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export function useFinance() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -19,193 +23,275 @@ export function useFinance() {
   const { user, loading: authLoading } = useAuthContext();
   const prevUser = useRef(user);
 
-  const syncAndFetchData = useCallback(async () => {
-    if (authLoading) return; // Wait until auth state is confirmed
+  // Function to load data from SQLite and update state
+  const loadTransactionsFromSqlite = useCallback(async () => {
+    setIsLoading(true);
+    await initializeDatabase(); // Ensure DB is initialized
+    const data = await sqliteGetTransactions();
+    setTransactions(data);
+    setIsLoading(false);
+  }, []);
+
+  // --- Explicit Sync Functions (manual user trigger) ---
+
+  const syncToCloud = useCallback(async () => {
+    if (!user) {
+      toast.error("Debes iniciar sesión para sincronizar con la nube.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const localTransactions = await sqliteGetTransactions();
+
+      // Clear all user's cloud transactions first to ensure local is the source of truth for backup
+      await supabaseApi.clearUserTransactions();
+
+      if (localTransactions && localTransactions.length > 0) {
+        // Supabase expects ISO strings for dates
+        const transactionsToUpload = localTransactions.map(
+          ({ id, ...rest }) => ({
+            ...rest,
+            date: new Date(rest.date).toISOString(),
+          })
+        );
+        await supabaseApi.addTransactions(transactionsToUpload);
+        toast.success("¡Copia de seguridad en la nube actualizada!");
+      } else {
+        toast.info("No hay datos locales para sincronizar con la nube.");
+      }
+    } catch (error) {
+      console.error("Error al sincronizar datos con la nube:", error);
+      toast.error("Error al subir copia de seguridad a la nube.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  const downloadBackupFromCloud = useCallback(async () => {
+    if (!user) {
+      toast.error("Debes iniciar sesión para descargar de la nube.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const cloudTransactions = await supabaseApi.getTransactions();
+      await sqliteClearAllTransactions(); // Clear local data before restoring
+      if (cloudTransactions && cloudTransactions.length > 0) {
+        for (const tx of cloudTransactions) {
+          // Add to SQLite, potentially generating new local IDs.
+          await sqliteAddTransaction({ ...tx, id: crypto.randomUUID() });
+        }
+        toast.success(
+          "¡Copia de seguridad descargada y restaurada localmente!"
+        );
+      } else {
+        toast.info("No hay copia de seguridad en la nube para descargar.");
+      }
+      await loadTransactionsFromSqlite(); // Refresh UI from local
+    } catch (error) {
+      console.error("Error al descargar copia de seguridad de la nube:", error);
+      toast.error("Error al descargar copia de seguridad.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, loadTransactionsFromSqlite]);
+
+  // --- Central Sync/Fetch Logic (on user state change) ---
+  const handleUserAuthStateChange = useCallback(async () => {
+    if (authLoading) return;
 
     const justLoggedIn = !prevUser.current && user;
     const justLoggedOut = prevUser.current && !user;
 
     try {
       setIsLoading(true);
-      let data: Transaction[] = [];
 
-      // Si el usuario acaba de iniciar sesión, sincroniza los datos locales primero (Offline a Online)
-      if (justLoggedIn) {
-        toast.info('Sincronizando datos locales (subiendo)...');
-        const localTransactions = await sqliteGetTransactions();
-        
-        if (localTransactions && localTransactions.length > 0) {
-          const transactionsToUpload = localTransactions.map(({ id, ...rest }) => rest);
-          await supabaseApi.addTransactions(transactionsToUpload);
-          await sqliteClearAllTransactions(); 
-          toast.success('¡Datos locales sincronizados con la nube!');
-        }
-      }
+      // Handle Online to Offline sync (on logout)
+      if (justLoggedOut && prevUser.current) {
+        toast.info(
+          "Detectado cierre de sesión. Descargando datos de la nube para uso offline..."
+        );
+        const cloudTransactions = await supabaseApi.getTransactions();
 
-      // Si el usuario acaba de cerrar sesión, sincroniza los datos de la nube al local (Online a Offline)
-      if (justLoggedOut && prevUser.current) { 
-        toast.info('Descargando datos de la nube...');
-        // Necesitamos asegurar que getTransactions se llame con el contexto del usuario que acaba de cerrar sesión.
-        // La función getTransactions de supabaseApi no necesita el user_id como parámetro explícito si RLS está configurado
-        // para usar auth.uid() en el backend.
-        const cloudTransactions = await supabaseApi.getTransactions(); 
-        
         if (cloudTransactions && cloudTransactions.length > 0) {
-          await sqliteClearAllTransactions(); 
+          await sqliteClearAllTransactions();
           for (const tx of cloudTransactions) {
             await sqliteAddTransaction({ ...tx, id: crypto.randomUUID() });
           }
-          toast.success('¡Datos de la nube guardados localmente!');
+          toast.success(
+            "¡Datos de la nube guardados localmente para uso offline!"
+          );
         } else {
-            // Si no hay transacciones en la nube, aseguramos que el local también esté limpio si no hay user
-            await sqliteClearAllTransactions();
-            toast.info('No hay transacciones en la nube para guardar localmente.');
+          await sqliteClearAllTransactions();
+          toast.info(
+            "No hay transacciones en la nube para guardar localmente al cerrar sesión."
+          );
         }
       }
 
-      // Ahora, carga la fuente de verdad basada en el estado de autenticación
-      if (user) {
-        data = await supabaseApi.getTransactions();
-      } else {
-        await initializeDatabase();
-        data = await sqliteGetTransactions();
-      }
-      setTransactions(data);
+      // Handle Offline to Online sync (on login)
+      if (justLoggedIn) {
+        toast.info("Detectado inicio de sesión. Verificando datos locales...");
+        const localTransactions = await sqliteGetTransactions();
 
+        if (localTransactions && localTransactions.length > 0) {
+          toast.info(
+            "Datos locales encontrados. Subiéndolos a la nube como copia de seguridad..."
+          );
+          await supabaseApi.clearUserTransactions();
+          const transactionsToUpload = localTransactions.map(
+            ({ id, ...rest }) => ({
+              ...rest,
+              date: new Date(rest.date).toISOString(),
+            })
+          );
+          await supabaseApi.addTransactions(transactionsToUpload);
+          toast.success("¡Datos locales subidos a la nube!");
+        } else {
+          toast.info(
+            "No hay datos locales. Buscando copia de seguridad en la nube..."
+          );
+          await downloadBackupFromCloud();
+        }
+      }
+
+      // Finally, always load from SQLite
+      await loadTransactionsFromSqlite();
     } catch (error) {
-      console.error('Error during sync or fetch:', error);
-      toast.error(`Error al cargar datos: ${(error as Error).message}`);
+      console.error("Error en la gestión de estado de autenticación:", error);
+      toast.error(
+        `Error al procesar la sincronización: ${(error as Error).message}`
+      );
     } finally {
       setIsLoading(false);
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, loadTransactionsFromSqlite, downloadBackupFromCloud]);
 
   useEffect(() => {
-    syncAndFetchData();
-    // Update the previous user state after the effect runs
+    handleUserAuthStateChange();
     prevUser.current = user;
-  }, [syncAndFetchData]);
+  }, [handleUserAuthStateChange, user]);
 
-  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
-    try {
-      if (user) {
-        // Supabase handles ID generation and returns the new transaction
-        const newTransaction = await supabaseApi.addTransaction(transaction);
-        setTransactions(prev => [newTransaction, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-      } else {
-        const newSqliteTransaction = { ...transaction, id: crypto.randomUUID() };
-        await sqliteAddTransaction(newSqliteTransaction);
-        setTransactions(prev => [newSqliteTransaction, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-      }
-      toast.success('Transacción agregada');
-    } catch (error) {
-      console.error('Error adding transaction:', error);
-      toast.error('Error al agregar transacción');
-    }
-  };
+  // --- Data Modification Functions (Always Local-First) ---
 
-  const deleteTransaction = async (id: string) => {
+  const addTransaction = async (transaction: Omit<Transaction, "id">) => {
+    setIsLoading(true);
     try {
-      // Optimistic deletion from UI
-      setTransactions(prev => prev.filter(t => t.id !== id));
-      
+      await initializeDatabase();
+      const newSqliteTransaction = { ...transaction, id: crypto.randomUUID() };
+      await sqliteAddTransaction(newSqliteTransaction);
+      await loadTransactionsFromSqlite();
+      toast.success("Transacción agregada localmente.");
       if (user) {
-        await supabaseApi.deleteTransaction(id);
-      } else {
-        await sqliteDeleteTransaction(id);
+        toast.info("Transacción agregada. Sincronizando con la nube...");
+        await syncToCloud();
       }
-      toast.success('Transacción eliminada');
     } catch (error) {
-      console.error('Error deleting transaction:', error);
-      // Revert optimistic deletion on error
-      fetchTransactions(); 
-      toast.error('Error al eliminar transacción');
-    }
-  };
-  
-  const clearAllFinanceData = useCallback(async () => {
-    if (user) {
-      toast.info('Esta función no está disponible para usuarios autenticados.');
-      return;
-    }
-    try {
-      setIsLoading(true);
-      await sqliteClearAllTransactions();
-      setTransactions([]); // Clear local state immediately
-      toast.success('Todos los datos financieros han sido borrados.');
-    } catch (error) {
-      console.error('Error clearing all finance data:', error);
-      toast.error('Error al borrar todos los datos financieros.');
+      console.error("Error al agregar transacción:", error);
+      toast.error("Error al agregar transacción.");
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  };
 
-  const exportFinanceData = useCallback(async (): Promise<string | undefined> => {
-    if (user) {
-      toast.info('Esta función no está disponible para usuarios autenticados.');
-      return;
-    }
-    try {
+  const deleteTransaction = useCallback(
+    async (id: string) => {
       setIsLoading(true);
+      try {
+        setTransactions((prev) => prev.filter((t) => t.id !== id));
+        await initializeDatabase();
+        await sqliteDeleteTransaction(id);
+        toast.success("Transacción eliminada localmente.");
+        if (user) {
+          toast.info("Transacción eliminada. Sincronizando con la nube...");
+          await syncToCloud();
+        }
+      } catch (error) {
+        console.error("Error al eliminar transacción:", error);
+        await loadTransactionsFromSqlite(); // Revert UI
+        toast.error("Error al eliminar transacción.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [loadTransactionsFromSqlite, user, syncToCloud]
+  );
+
+  const clearAllFinanceData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await initializeDatabase();
+      await sqliteClearAllTransactions();
+      setTransactions([]);
+      toast.success("Todos los datos financieros locales han sido borrados.");
+    } catch (error) {
+      console.error("Error al borrar datos:", error);
+      toast.error("Error al borrar todos los datos financieros.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const exportFinanceData = useCallback(async (): Promise<
+    string | undefined
+  > => {
+    setIsLoading(true);
+    try {
+      await initializeDatabase();
       const jsonData = await sqliteExportTransactionsToJson();
-      toast.success('Datos exportados exitosamente.');
+      toast.success("Datos exportados exitosamente.");
       return jsonData;
     } catch (error) {
-      console.error('Error exporting finance data:', error);
-      toast.error('Error al exportar datos financieros.');
+      console.error("Error al exportar datos:", error);
+      toast.error("Error al exportar datos financieros.");
       return undefined;
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, []);
 
-  const importFinanceData = useCallback(async (jsonData: string) => {
-    if (user) {
-      toast.info('Esta función no está disponible para usuarios autenticados.');
-      return;
-    }
-    try {
+  const importFinanceData = useCallback(
+    async (jsonData: string) => {
       setIsLoading(true);
-      await sqliteImportTransactionsFromJson(jsonData);
-      await syncAndFetchData(); // Refresh UI after import
-      toast.success('Datos importados exitosamente.');
-    } catch (error) {
-      console.error('Error importing finance data:', error);
-      toast.error('Error al importar datos financieros.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, syncAndFetchData]);
+      try {
+        await initializeDatabase();
+        await sqliteImportTransactionsFromJson(jsonData);
+        await loadTransactionsFromSqlite();
+        toast.success("Datos importados exitosamente.");
+      } catch (error) {
+        console.error("Error al importar datos:", error);
+        toast.error("Error al importar datos financieros.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [loadTransactionsFromSqlite]
+  );
 
   const summary = useMemo<FinanceSummary>(() => {
-    const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-    const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-    const balance = totalIncome - totalExpenses;
-    const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
-    return { totalIncome, totalExpenses, balance, savingsRate };
-  }, [transactions]);
-
-  const expensesByCategory = useMemo(() => {
-    const expenses = transactions.filter(t => t.type === 'expense');
-    const grouped = expenses.reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount;
-      return acc;
-    }, {} as Record<string, number>);
-    return Object.entries(grouped).map(([name, value]) => ({ name, value }));
+    const totalIncome = transactions
+      .filter((t) => t.type === "income")
+      .reduce((sum, t) => sum + t.amount, 0);
+    const totalExpense = transactions
+      .filter((t) => t.type === "expense")
+      .reduce((sum, t) => sum + t.amount, 0);
+    return {
+      totalIncome,
+      totalExpense,
+      balance: totalIncome - totalExpense,
+    };
   }, [transactions]);
 
   return {
     transactions,
+    isLoading,
     summary,
     addTransaction,
     deleteTransaction,
-    expensesByCategory,
-    isLoading: isLoading || authLoading,
-    refetch: syncAndFetchData,
     clearAllFinanceData,
     exportFinanceData,
     importFinanceData,
+    syncToCloud,
+    downloadBackupFromCloud,
   };
 }
-
