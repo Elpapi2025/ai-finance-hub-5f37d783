@@ -22,6 +22,10 @@ const DashboardView = lazy(() => import("./components/views/DashboardView").then
 const AIAssistantView = lazy(() => import("./components/views/AIAssistantView").then(module => ({ default: module.AIAssistantView })));
 const LoginView = lazy(() => import("./components/views/LoginView").then(module => ({ default: module.LoginView })));
 const ProfileView = lazy(() => import("./components/views/ProfileView").then(module => ({ default: module.ProfileView })));
+const HomeView = lazy(() => import("./components/views/HomeView").then(module => ({ default: module.HomeView })));
+const TransactionsView = lazy(() => import("./components/views/TransactionsView").then(module => ({ default: module.TransactionsView })));
+const ReportsView = lazy(() => import("./components/views/ReportsView").then(module => ({ default: module.ReportsView })));
+const DataManagementView = lazy(() => import("./components/views/DataManagementView").then(module => ({ default: module.DataManagementView })));
 
 
 // Error Boundary Component
@@ -125,8 +129,18 @@ const App = () => (
             <Route path="/login" element={<LoginView />} />
             <Route path="/profile" element={<ProfileView />} />
             <Route path="/" element={<MainLayout />}>
-              <Route index element={<DashboardView />} />
+              <Route index element={<HomeView />} />
+              <Route path="dashboard" element={<DashboardView />} />
+              <Route path="transactions" element={<TransactionsView />} />
+              <Route path="reports" element={<ReportsView />} />
+              <Route path="goals" element={
+                <div className="glass rounded-2xl p-8 text-center">
+                  <h2 className="text-2xl font-bold mb-2">Metas Financieras</h2>
+                  <p className="text-muted-foreground">Próximamente: Establece y rastrea tus metas de ahorro</p>
+                </div>
+              } />
               <Route path="ai" element={<AIAssistantView />} />
+              <Route path="data-management" element={<DataManagementView />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

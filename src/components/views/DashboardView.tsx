@@ -1,14 +1,12 @@
-import { TrendingUp, TrendingDown, Wallet, PiggyBank, Plus } from 'lucide-react';
 import { StatCard } from '@/components/finance/StatCard';
 import { TransactionList } from '@/components/finance/TransactionList';
 import { ExpenseChart } from '@/components/finance/ExpenseChart';
 import { MonthlyChart } from '@/components/finance/MonthlyChart';
 import { AITips } from '@/components/finance/AITips';
-import { Button } from '@/components/ui/button';
-import { FinanceSummary, Transaction, FinanceContextType } from '@/types/finance'; // Import FinanceContextType
+import { FinanceContextType } from '@/types/finance'; // Import FinanceContextType
 import { useOutletContext } from 'react-router-dom'; // Import useOutletContext
 
-export function DashboardView({ onAddClick }: { onAddClick: () => void }) { // Accept onAddClick as prop
+export function DashboardView() {
   const context = useOutletContext<FinanceContextType>(); // Get entire context
   console.log("DashboardView: Context from useOutletContext is", context); // Debug log
 
@@ -28,7 +26,6 @@ export function DashboardView({ onAddClick }: { onAddClick: () => void }) { // A
     deleteTransaction,
     expensesByCategory,
     isLoading,
-    addTransaction, // Get addTransaction from context for onAddClick
   } = context;
 
   if (isLoading || !summary) { // Render loading state if data is not ready
@@ -52,10 +49,6 @@ export function DashboardView({ onAddClick }: { onAddClick: () => void }) { // A
             Aquí está el resumen de tus finanzas
           </p>
         </div>
-        <Button onClick={onAddClick} className="hidden lg:flex"> {/* Use the onAddClick prop */}
-          <Plus className="w-4 h-4 mr-2" />
-          Nueva Transacción
-        </Button>
       </div>
 
       {/* Stats Grid */}
@@ -65,7 +58,6 @@ export function DashboardView({ onAddClick }: { onAddClick: () => void }) { // A
           value={`$${summary.balance.toLocaleString()}`}
           icon={Wallet}
           variant="balance"
-          // trend={{ value: 12, positive: true }} // Removed trend as it's not provided by useFinance
         />
         <StatCard
           title="Ingresos"
@@ -86,7 +78,6 @@ export function DashboardView({ onAddClick }: { onAddClick: () => void }) { // A
           value={`${summary.savingsRate.toFixed(0)}%`}
           icon={PiggyBank}
           variant="default"
-          // trend={{ value: 5, positive: true }} // Removed trend as it's not provided by useFinance
         />
       </div>
 
@@ -103,6 +94,12 @@ export function DashboardView({ onAddClick }: { onAddClick: () => void }) { // A
           onDelete={deleteTransaction}
         />
         <AITips summary={summary} />
+      </div>
+
+      {/* Metas Financieras (Goals Section) */}
+      <div className="glass rounded-2xl p-8 text-center">
+        <h2 className="text-2xl font-bold mb-2">Metas Financieras</h2>
+        <p className="text-muted-foreground">Próximamente: Establece y rastrea tus metas de ahorro</p>
       </div>
     </div>
   );
