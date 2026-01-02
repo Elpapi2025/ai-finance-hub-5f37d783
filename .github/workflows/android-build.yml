@@ -42,13 +42,23 @@ jobs:
 
       - name: Ensure Maven repositories are correctly configured
         run: |
-          # Ensure google() and mavenCentral() are at the top of buildscript repositories
-          sed -i '/buildscript {/,/repositories {/ s/repositories {/repositories {\n        google()\n        mavenCentral()/g' android/build.gradle
-          # Ensure google() and mavenCentral() are at the top of allprojects repositories
-          sed -i '/allprojects {/,/repositories {/ s/repositories {/repositories {\n        google()\n        mavenCentral()/g' android/build.gradle
-          # Print the modified build.gradle file to diagnose if sed worked
+          # Define common repository lines to add
+          REPO_LINES='        maven { url "https://maven.google.com" }\n        maven { url "https://repo.maven.apache.org/maven2" }'
+
+          # Add to buildscript repositories in android/build.gradle
+          sed -i "/buildscript {/,/repositories {/ s/repositories {/repositories {\n${REPO_LINES}/g" android/build.gradle
+          # Add to allprojects repositories in android/build.gradle
+          sed -i "/allprojects {/,/repositories {/ s/repositories {/repositories {\n${REPO_LINES}/g" android/build.gradle
+
+          # Add to repositories in android/app/build.gradle (append if not found)
+          sed -i "/repositories {/a \
+          ${REPO_LINES}" android/app/build.gradle
+          
+          # Print the modified build.gradle files to diagnose if sed worked
           echo "--- Modified android/build.gradle ---"
           cat android/build.gradle
+          echo "--- Modified android/app/build.gradle ---"
+          cat android/app/build.gradle
           echo "-----------------------------------------"
 
       - name: Set Java compatibility to 17 in build.gradle
