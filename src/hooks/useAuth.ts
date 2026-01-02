@@ -41,7 +41,14 @@ export const useAuth = () => {
     session,
     loading: loading || isPending,
     login: (email, password) => supabase.auth.signInWithPassword({ email, password }),
-    logout: () => supabase.auth.signOut(),
+    logout: async () => {
+      const currentUser = user; // Capturar el usuario actual antes de cerrar sesión
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error al cerrar sesión:', error);
+      }
+      return { error, user: currentUser }; // Devolver el usuario para propósitos de sincronización
+    },
     register: (email, password) => supabase.auth.signUp({ email, password }),
   };
 };

@@ -2,12 +2,7 @@ import { NavLink } from '@/components/NavLink';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
-  ArrowUpDown,
-  PieChart,
-  Target,
-  Settings,
   Sparkles,
-  Database, // Import the Database icon
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -15,12 +10,8 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/' },
-  { id: 'transactions', label: 'Transacciones', icon: ArrowUpDown, path: '/transactions' },
-  { id: 'reports', label: 'Reportes', icon: PieChart, path: '/reports' },
-  { id: 'goals', label: 'Metas', icon: Target, path: '/goals' },
+  { id: 'dashboard', label: 'Inicio', icon: LayoutDashboard, path: '/' },
   { id: 'ai', label: 'Asistente IA', icon: Sparkles, path: '/ai' },
-  { id: 'data-management', label: 'Gestión de Datos', icon: Database, path: '/data-management' }, // New item
 ];
 
 export function Sidebar({ onViewChange }: SidebarProps) {

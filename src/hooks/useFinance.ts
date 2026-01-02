@@ -23,26 +23,47 @@ export function useFinance() {
     if (authLoading) return; // Wait until auth state is confirmed
 
     const justLoggedIn = !prevUser.current && user;
+    const justLoggedOut = prevUser.current && !user;
 
     try {
       setIsLoading(true);
       let data: Transaction[] = [];
 
-      // If the user just logged in, sync local data first
+      // Si el usuario acaba de iniciar sesión, sincroniza los datos locales primero (Offline a Online)
       if (justLoggedIn) {
-        toast.info('Sincronizando datos locales...');
+        toast.info('Sincronizando datos locales (subiendo)...');
         const localTransactions = await sqliteGetTransactions();
         
         if (localTransactions && localTransactions.length > 0) {
-          // Omit 'id' from local transactions as Supabase will generate new ones
           const transactionsToUpload = localTransactions.map(({ id, ...rest }) => rest);
           await supabaseApi.addTransactions(transactionsToUpload);
-          await sqliteClearAllTransactions(); // Clear local data after successful sync
+          await sqliteClearAllTransactions(); 
           toast.success('¡Datos locales sincronizados con la nube!');
         }
       }
 
-      // Now, fetch the source of truth based on auth state
+      // Si el usuario acaba de cerrar sesión, sincroniza los datos de la nube al local (Online a Offline)
+      if (justLoggedOut && prevUser.current) { 
+        toast.info('Descargando datos de la nube...');
+        // Necesitamos asegurar que getTransactions se llame con el contexto del usuario que acaba de cerrar sesión.
+        // La función getTransactions de supabaseApi no necesita el user_id como parámetro explícito si RLS está configurado
+        // para usar auth.uid() en el backend.
+        const cloudTransactions = await supabaseApi.getTransactions(); 
+        
+        if (cloudTransactions && cloudTransactions.length > 0) {
+          await sqliteClearAllTransactions(); 
+          for (const tx of cloudTransactions) {
+            await sqliteAddTransaction({ ...tx, id: crypto.randomUUID() });
+          }
+          toast.success('¡Datos de la nube guardados localmente!');
+        } else {
+            // Si no hay transacciones en la nube, aseguramos que el local también esté limpio si no hay user
+            await sqliteClearAllTransactions();
+            toast.info('No hay transacciones en la nube para guardar localmente.');
+        }
+      }
+
+      // Ahora, carga la fuente de verdad basada en el estado de autenticación
       if (user) {
         data = await supabaseApi.getTransactions();
       } else {

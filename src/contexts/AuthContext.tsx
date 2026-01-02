@@ -7,7 +7,7 @@ type AuthContextType = {
   session: Session | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ error: any; }>;
-  logout: () => Promise<{ error: any; }>;
+  logout: () => Promise<{ error: any; user: User | null; }>;
   register: (email: string, password: string) => Promise<{ error: any; }>;
 };
 

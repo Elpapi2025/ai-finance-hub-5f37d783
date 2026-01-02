@@ -2,13 +2,8 @@ import { NavLink } from '@/components/NavLink'; // Import NavLink
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
-  ArrowUpDown,
-  PieChart,
   Plus,
   Sparkles,
-  Target, // Add Target for Goals
-  Database, // Add Database for Data Management
-  Settings // Add Settings for Settings
 } from 'lucide-react';
 
 interface MobileNavProps {
@@ -19,11 +14,7 @@ interface MobileNavProps {
 
 const navItems = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Inicio', path: '/' },
-  { id: 'transactions', icon: ArrowUpDown, label: 'Movimientos', path: '/transactions' },
-  { id: 'reports', icon: PieChart, label: 'Reportes', path: '/reports' },
-  { id: 'goals', icon: Target, label: 'Metas', path: '/goals' }, // Add Goals
   { id: 'ai', icon: Sparkles, label: 'IA', path: '/ai' },
-  { id: 'data-management', icon: Database, label: 'Datos', path: '/data-management' }, // Add Data Management
 ];
 
 export function MobileNav({ currentView, onViewChange, onAddClick }: MobileNavProps) {
@@ -48,8 +39,8 @@ export function MobileNav({ currentView, onViewChange, onAddClick }: MobileNavPr
     );
   };
 
-  const leftNavItems = navItems.slice(0, 3); // First 3 items
-  const rightNavItems = navItems.slice(3); // Remaining 4 items
+  const leftNavItems = navItems.slice(0, 1); // Only 'Inicio'
+  const rightNavItems = navItems.slice(1);   // Only 'IA'
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden glass border-t border-border/50">

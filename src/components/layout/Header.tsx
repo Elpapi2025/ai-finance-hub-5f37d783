@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'; // Importar Avatar y AvatarFallback
 
 interface HeaderProps {}
 
@@ -35,12 +36,16 @@ const AuthNav = () => {
 
   if (!user) {
     return (
-      <Button onClick={() => {
+      <Button variant="ghost" className="relative h-9 w-9 rounded-full" onClick={() => {
         startTransition(() => {
-          navigate('/login');
+          navigate('/profile');
         });
       }}>
-        Iniciar Sesión
+         <Avatar className="w-9 h-9">
+            <AvatarFallback className="bg-muted text-muted-foreground">
+                <UserIcon className="w-5 h-5" />
+            </AvatarFallback>
+         </Avatar>
       </Button>
     );
   }
@@ -66,7 +71,7 @@ const AuthNav = () => {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => startTransition(() => navigate('/settings'))}>
+        <DropdownMenuItem onClick={() => startTransition(() => navigate('/profile'))}>
           <Settings className="mr-2 h-4 w-4" />
           <span>Ajustes</span>
         </DropdownMenuItem>
