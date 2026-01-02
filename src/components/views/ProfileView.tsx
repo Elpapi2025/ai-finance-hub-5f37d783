@@ -1,19 +1,22 @@
 import { useState, useTransition } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useAuthContext } from '@/contexts/AuthContext';
-import * as LucideIcons from 'lucide-react'; // Importar todos los iconos como espacio de nombres
+import * as LucideIcons from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch'; // Assuming a switch for a setting example
+import { Switch } from '@/components/ui/switch';
+import { FinanceContextType } from '@/types/finance';
 
 export function ProfileView() {
   const { user, logout } = useAuthContext();
   const navigate = useNavigate();
   const [, startTransition] = useTransition();
+
+  const { syncToCloud, downloadBackupFromCloud, isLoading: financeIsLoading } = useOutletContext<FinanceContextType>();
 
   const handleLogout = async () => {
     await logout();
@@ -22,15 +25,12 @@ export function ProfileView() {
     });
   };
 
-  const handleGoBack = () => { // Función para el botón de retroceso
+  const handleGoBack = () => {
     navigate(-1);
   };
 
   const handleGoToSettings = () => {
-    // Navigate to a dedicated settings page or open a modal if settings get complex
-    // For now, let's just show a toast or expand this view later.
     console.log("Going to settings!");
-    // You could also render settings directly here or in a sub-component
   };
 
   return (
@@ -64,14 +64,13 @@ export function ProfileView() {
             </h3>
             <div className="flex items-center justify-between">
               <Label htmlFor="dark-mode">Modo Oscuro</Label>
-              <Switch id="dark-mode" defaultChecked={true} /> {/* Example setting */}
+              <Switch id="dark-mode" defaultChecked={true} />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <Label htmlFor="notifications">Notificaciones</Label>
-              <Switch id="notifications" /> {/* Example setting */}
+              <Switch id="notifications" />
             </div>
-            {/* Add more settings here */}
           </div>
 
           <Separator />
@@ -87,6 +86,26 @@ export function ProfileView() {
             >
               Exportar / Importar Datos
             </Button>
+            {user && (
+              <>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={syncToCloud}
+                  disabled={financeIsLoading}
+                >
+                  {financeIsLoading ? <LucideIcons.Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LucideIcons.Upload className="mr-2 h-4 w-4" />} Sincronizar a la Nube (Subir)
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={downloadBackupFromCloud}
+                  disabled={financeIsLoading}
+                >
+                  {financeIsLoading ? <LucideIcons.Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LucideIcons.Download className="mr-2 h-4 w-4" />} Descargar de la Nube (Restaurar)
+                </Button>
+              </>
+            )}
           </div>
         </CardContent>
         {!user && (

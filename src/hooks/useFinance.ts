@@ -98,8 +98,12 @@ export function useFinance() {
 
   // --- Central Sync/Fetch Logic (on user state change) ---
   const handleUserAuthStateChange = useCallback(async () => {
-    if (authLoading) return;
+    if (authLoading) {
+      console.log("handleUserAuthStateChange: authLoading es true, regresando.");
+      return;
+    }
 
+    console.log("handleUserAuthStateChange: Iniciando. Usuario actual:", user?.email, "Usuario previo:", prevUser.current?.email);
     const justLoggedIn = !prevUser.current && user;
     const justLoggedOut = prevUser.current && !user;
 
@@ -108,21 +112,26 @@ export function useFinance() {
 
       // Handle Online to Offline sync (on logout)
       if (justLoggedOut && prevUser.current) {
+        console.log("handleUserAuthStateChange: Detectado cierre de sesión.");
         toast.info(
           "Detectado cierre de sesión. Descargando datos de la nube para uso offline..."
         );
         const cloudTransactions = await supabaseApi.getTransactions();
+        console.log("handleUserAuthStateChange: Transacciones de la nube al cerrar sesión:", cloudTransactions?.length || 0);
 
         if (cloudTransactions && cloudTransactions.length > 0) {
           await sqliteClearAllTransactions();
+          console.log("handleUserAuthStateChange: Datos locales limpiados antes de guardar offline.");
           for (const tx of cloudTransactions) {
             await sqliteAddTransaction({ ...tx, id: crypto.randomUUID() });
           }
+          console.log("handleUserAuthStateChange: Datos de la nube guardados localmente para uso offline.");
           toast.success(
             "¡Datos de la nube guardados localmente para uso offline!"
           );
         } else {
           await sqliteClearAllTransactions();
+          console.log("handleUserAuthStateChange: No hay transacciones en la nube, datos locales limpiados.");
           toast.info(
             "No hay transacciones en la nube para guardar localmente al cerrar sesión."
           );
@@ -131,14 +140,18 @@ export function useFinance() {
 
       // Handle Offline to Online sync (on login)
       if (justLoggedIn) {
+        console.log("handleUserAuthStateChange: Detectado inicio de sesión.");
         toast.info("Detectado inicio de sesión. Verificando datos locales...");
         const localTransactions = await sqliteGetTransactions();
+        console.log("handleUserAuthStateChange: Transacciones locales al iniciar sesión:", localTransactions?.length || 0);
 
         if (localTransactions && localTransactions.length > 0) {
+          console.log("handleUserAuthStateChange: Datos locales encontrados.");
           toast.info(
             "Datos locales encontrados. Subiéndolos a la nube como copia de seguridad..."
           );
           await supabaseApi.clearUserTransactions();
+          console.log("handleUserAuthStateChange: Transacciones de la nube limpiadas antes de subir datos locales.");
           const transactionsToUpload = localTransactions.map(
             ({ id, ...rest }) => ({
               ...rest,
@@ -146,17 +159,21 @@ export function useFinance() {
             })
           );
           await supabaseApi.addTransactions(transactionsToUpload);
+          console.log("handleUserAuthStateChange: Datos locales subidos a la nube.");
           toast.success("¡Datos locales subidos a la nube!");
         } else {
+          console.log("handleUserAuthStateChange: No hay datos locales.");
           toast.info(
             "No hay datos locales. Buscando copia de seguridad en la nube..."
           );
           await downloadBackupFromCloud();
+          console.log("handleUserAuthStateChange: downloadBackupFromCloud() ejecutado.");
         }
       }
 
       // Finally, always load from SQLite
       await loadTransactionsFromSqlite();
+      console.log("handleUserAuthStateChange: Datos cargados desde SQLite para actualizar la UI.");
     } catch (error) {
       console.error("Error en la gestión de estado de autenticación:", error);
       toast.error(
@@ -164,8 +181,9 @@ export function useFinance() {
       );
     } finally {
       setIsLoading(false);
+      console.log("handleUserAuthStateChange: Finalizado. isLoading ajustado a false.");
     }
-  }, [user, authLoading, loadTransactionsFromSqlite, downloadBackupFromCloud]);
+  }, [user, authLoading, loadTransactionsFromSqlite, downloadBackupFromCloud, prevUser]);
 
   useEffect(() => {
     handleUserAuthStateChange();
@@ -272,13 +290,20 @@ export function useFinance() {
     const totalIncome = transactions
       .filter((t) => t.type === "income")
       .reduce((sum, t) => sum + t.amount, 0);
-    const totalExpense = transactions
+    const totalExpenses = transactions
       .filter((t) => t.type === "expense")
       .reduce((sum, t) => sum + t.amount, 0);
+    
+    const balance = totalIncome - totalExpenses;
+
+    // Calculate savingsRate, handling division by zero
+    const savingsRate = totalIncome > 0 ? (balance / totalIncome) * 100 : 0;
+
     return {
       totalIncome,
-      totalExpense,
-      balance: totalIncome - totalExpense,
+      totalExpenses,
+      balance,
+      savingsRate,
     };
   }, [transactions]);
 
