@@ -181,7 +181,7 @@ export function useFinance() {
     deleteTransaction,
     expensesByCategory,
     isLoading: isLoading || authLoading,
-    refetch: fetchTransactions,
+    refetch: syncAndFetchData,
     clearAllFinanceData,
     exportFinanceData,
     importFinanceData,
