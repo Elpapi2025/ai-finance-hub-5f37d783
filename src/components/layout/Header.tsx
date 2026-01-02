@@ -1,6 +1,5 @@
 import { useTransition } from 'react';
-import { Wallet } from 'lucide-react'; // Aislamos la importación de Wallet para evitar conflictos
-import { Menu, X, Bell, LogOut, User as UserIcon, Settings } from 'lucide-react';
+import { Wallet, Bell, LogOut, User as UserIcon, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuthContext } from '@/contexts/AuthContext';
