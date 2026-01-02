@@ -147,7 +147,7 @@ export function useFinance() {
     try {
       setIsLoading(true);
       await sqliteImportTransactionsFromJson(jsonData);
-      await fetchTransactions(); // Refresh UI after import
+      await syncAndFetchData(); // Refresh UI after import
       toast.success('Datos importados exitosamente.');
     } catch (error) {
       console.error('Error importing finance data:', error);
@@ -155,7 +155,7 @@ export function useFinance() {
     } finally {
       setIsLoading(false);
     }
-  }, [user, fetchTransactions]);
+  }, [user, syncAndFetchData]);
 
   const summary = useMemo<FinanceSummary>(() => {
     const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
