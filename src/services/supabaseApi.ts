@@ -53,6 +53,36 @@ export async function addTransaction(transaction: Omit<Transaction, 'id'>): Prom
 }
 
 /**
+ * Adds multiple transactions in a single batch for the currently authenticated user.
+ * @param transactions - An array of transaction objects, without the 'id'.
+ */
+export async function addTransactions(transactions: Omit<Transaction, 'id'>[]): Promise<Transaction[]> {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error('User not authenticated. Cannot add transactions.');
+  }
+
+  // Add user_id to each transaction
+  const transactionsData = transactions.map(t => ({
+    ...t,
+    user_id: user.id,
+  }));
+
+  const { data: newTransactions, error } = await supabase
+    .from('transactions')
+    .insert(transactionsData)
+    .select();
+
+  if (error) {
+    console.error('Error bulk adding transactions to Supabase:', error);
+    throw error;
+  }
+
+  return newTransactions as Transaction[];
+}
+
+/**
  * Deletes a transaction by its ID.
  * RLS policy ensures a user can only delete their own transactions.
  * @param id - The UUID of the transaction to delete.

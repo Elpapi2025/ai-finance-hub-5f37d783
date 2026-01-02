@@ -24,7 +24,6 @@ const navItems = [
   { id: 'goals', icon: Target, label: 'Metas', path: '/goals' }, // Add Goals
   { id: 'ai', icon: Sparkles, label: 'IA', path: '/ai' },
   { id: 'data-management', icon: Database, label: 'Datos', path: '/data-management' }, // Add Data Management
-  { id: 'settings', icon: Settings, label: 'Ajustes', path: '/settings' }, // Add Settings
 ];
 
 export function MobileNav({ currentView, onViewChange, onAddClick }: MobileNavProps) {

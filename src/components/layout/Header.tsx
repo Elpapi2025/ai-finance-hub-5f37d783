@@ -1,6 +1,6 @@
 
 import { useTransition } from 'react';
-import { Menu, X, Wallet, Bell, LogOut, User as UserIcon } from 'lucide-react';
+import { Menu, X, Wallet, Bell, LogOut, User as UserIcon, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -66,6 +66,10 @@ const AuthNav = () => {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => startTransition(() => navigate('/settings'))}>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Ajustes</span>
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Cerrar sesión</span>

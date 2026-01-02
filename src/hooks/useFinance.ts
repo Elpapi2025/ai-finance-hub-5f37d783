@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Transaction, FinanceSummary } from '@/types/finance';
 import { 
   initializeDatabase, 
@@ -17,33 +17,53 @@ export function useFinance() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user, loading: authLoading } = useAuthContext();
+  const prevUser = useRef(user);
 
-  const fetchTransactions = useCallback(async () => {
+  const syncAndFetchData = useCallback(async () => {
     if (authLoading) return; // Wait until auth state is confirmed
-    
+
+    const justLoggedIn = !prevUser.current && user;
+
     try {
       setIsLoading(true);
-      let data: Transaction[];
+      let data: Transaction[] = [];
+
+      // If the user just logged in, sync local data first
+      if (justLoggedIn) {
+        toast.info('Sincronizando datos locales...');
+        const localTransactions = await sqliteGetTransactions();
+        
+        if (localTransactions && localTransactions.length > 0) {
+          // Omit 'id' from local transactions as Supabase will generate new ones
+          const transactionsToUpload = localTransactions.map(({ id, ...rest }) => rest);
+          await supabaseApi.addTransactions(transactionsToUpload);
+          await sqliteClearAllTransactions(); // Clear local data after successful sync
+          toast.success('¡Datos locales sincronizados con la nube!');
+        }
+      }
+
+      // Now, fetch the source of truth based on auth state
       if (user) {
-        // User is logged in, use Supabase
         data = await supabaseApi.getTransactions();
       } else {
-        // User is logged out, use SQLite
         await initializeDatabase();
         data = await sqliteGetTransactions();
       }
       setTransactions(data);
+
     } catch (error) {
-      console.error('Error fetching transactions:', error);
-      toast.error(`Error al cargar transacciones: ${(error as Error).message}`);
+      console.error('Error during sync or fetch:', error);
+      toast.error(`Error al cargar datos: ${(error as Error).message}`);
     } finally {
       setIsLoading(false);
     }
   }, [user, authLoading]);
 
   useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+    syncAndFetchData();
+    // Update the previous user state after the effect runs
+    prevUser.current = user;
+  }, [syncAndFetchData]);
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     try {

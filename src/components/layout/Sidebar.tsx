@@ -21,7 +21,6 @@ const menuItems = [
   { id: 'goals', label: 'Metas', icon: Target, path: '/goals' },
   { id: 'ai', label: 'Asistente IA', icon: Sparkles, path: '/ai' },
   { id: 'data-management', label: 'Gestión de Datos', icon: Database, path: '/data-management' }, // New item
-  { id: 'settings', label: 'Ajustes', icon: Settings, path: '/settings' },
 ];
 
 export function Sidebar({ onViewChange }: SidebarProps) {
