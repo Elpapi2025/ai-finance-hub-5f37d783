@@ -42,7 +42,7 @@ const AuthNav = () => { // AuthNav definition starts here
       }}>
          <Avatar className="w-9 h-9">
             <AvatarFallback className="bg-muted text-muted-foreground">
-                <UserIcon className="w-5 h-5" />
+                <LucideIcons.User className="w-5 h-5" />
             </AvatarFallback>
          </Avatar>
       </Button>
