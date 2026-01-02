@@ -46,9 +46,9 @@ jobs:
           REPO_LINES='        maven { url "https://maven.google.com" }\n        maven { url "https://repo.maven.apache.org/maven2" }'
 
           # Add to buildscript repositories in android/build.gradle
-          sed -i "/buildscript {/,/repositories {/ s/repositories {/repositories {\n${REPO_LINES}/g" android/build.gradle
+          sed -i "s|repositories {|repositories {\n${REPO_LINES}|g" android/build.gradle
           # Add to allprojects repositories in android/build.gradle
-          sed -i "/allprojects {/,/repositories {/ s/repositories {/repositories {\n${REPO_LINES}/g" android/build.gradle
+          sed -i "s|repositories {|repositories {\n${REPO_LINES}|g" android/build.gradle
 
           # Add to repositories in android/app/build.gradle (append if not found)
           sed -i "/repositories {/a \
