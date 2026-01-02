@@ -307,6 +307,20 @@ export function useFinance() {
     };
   }, [transactions]);
 
+  const expensesByCategory = useMemo(() => {
+    const expensesMap = new Map<string, number>();
+    transactions
+      .filter((t) => t.type === "expense")
+      .forEach((t) => {
+        const currentAmount = expensesMap.get(t.category) || 0;
+        expensesMap.set(t.category, currentAmount + t.amount);
+      });
+    return Array.from(expensesMap.entries()).map(([name, value]) => ({
+      name,
+      value,
+    }));
+  }, [transactions]);
+
   return {
     transactions,
     isLoading,
@@ -318,5 +332,7 @@ export function useFinance() {
     importFinanceData,
     syncToCloud,
     downloadBackupFromCloud,
+    expensesByCategory,
+    refetch: loadTransactionsFromSqlite,
   };
 }

@@ -37,7 +37,7 @@ export function TransactionList({ transactions, onDelete }: TransactionListProps
                 {getCategoryIcon(transaction.category)}
               </div>
               <div>
-                <p className="font-medium text-sm">{transaction.description}</p>
+                <p className="font-medium text-sm">{transaction.name}</p>
                 <p className="text-xs text-muted-foreground">
                   {transaction.category} • {format(transaction.date, "d MMM", { locale: es })}
                 </p>

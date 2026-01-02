@@ -7,7 +7,7 @@ import { forwardRef, useTransition, MouseEvent } from "react";
 import { cn } from "@/lib/utils";
 
 interface NavLinkCompatProps extends Omit<NavLinkProps, "className" | "onClick"> {
-  className?: string;
+  className?: string | ((props: { isActive: boolean; isPending: boolean }) => string | undefined | null);
   activeClassName?: string;
   pendingClassName?: string;
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;

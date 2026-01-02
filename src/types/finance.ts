@@ -42,4 +42,5 @@ export interface FinanceContextType {
   importFinanceData: (jsonData: string) => Promise<void>;
   syncToCloud: () => Promise<void>;
   downloadBackupFromCloud: () => Promise<void>;
+  openModal: () => void;
 }

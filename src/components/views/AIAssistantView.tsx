@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { FinanceSummary, FinanceContextType } from '@/types/finance'; // Import FinanceContextType
 import { useOutletContext } from 'react-router-dom'; // Import useOutletContext
+import { toast } from 'sonner';
 
 interface Message {
   id: string;

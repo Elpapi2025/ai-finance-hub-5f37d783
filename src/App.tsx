@@ -107,6 +107,7 @@ const MainLayout = () => {
       <MobileNav
         currentView={currentPath}
         onAddClick={() => setIsModalOpen(true)}
+        onViewChange={handleViewChange}
       />
 
       <AddTransactionModal
