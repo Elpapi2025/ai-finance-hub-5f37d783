@@ -5,6 +5,7 @@ import { MonthlyChart } from '@/components/finance/MonthlyChart';
 import { AITips } from '@/components/finance/AITips';
 import { FinanceContextType } from '@/types/finance'; // Import FinanceContextType
 import { useOutletContext } from 'react-router-dom'; // Import useOutletContext
+import * as LucideIcons from 'lucide-react'; // Importar todos los iconos de lucide-react
 
 export function DashboardView() {
   const context = useOutletContext<FinanceContextType>(); // Get entire context
@@ -56,27 +57,27 @@ export function DashboardView() {
         <StatCard
           title="Balance Total"
           value={`$${summary.balance.toLocaleString()}`}
-          icon={Wallet}
+          icon={LucideIcons.Wallet}
           variant="balance"
         />
         <StatCard
           title="Ingresos"
           value={`$${summary.totalIncome.toLocaleString()}`}
-          icon={TrendingUp}
+          icon={LucideIcons.TrendingUp}
           variant="income"
           subtitle="Este mes"
         />
         <StatCard
           title="Gastos"
           value={`$${summary.totalExpenses.toLocaleString()}`}
-          icon={TrendingDown}
+          icon={LucideIcons.TrendingDown}
           variant="expense"
           subtitle="Este mes"
         />
         <StatCard
           title="Tasa de Ahorro"
           value={`${summary.savingsRate.toFixed(0)}%`}
-          icon={PiggyBank}
+          icon={LucideIcons.PiggyBank}
           variant="default"
         />
       </div>
