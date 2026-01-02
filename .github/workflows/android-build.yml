@@ -40,6 +40,17 @@ jobs:
           npx cap init "Finance Hub" com.gemini.financehub --web-dir dist
           npx cap add android
 
+      - name: Ensure Maven repositories are correctly configured
+        run: |
+          # Ensure google() and mavenCentral() are at the top of buildscript repositories
+          sed -i '/buildscript {/,/repositories {/ s/repositories {/repositories {\n        google()\n        mavenCentral()/g' android/build.gradle
+          # Ensure google() and mavenCentral() are at the top of allprojects repositories
+          sed -i '/allprojects {/,/repositories {/ s/repositories {/repositories {\n        google()\n        mavenCentral()/g' android/build.gradle
+          # Print the modified build.gradle file to diagnose if sed worked
+          echo "--- Modified android/build.gradle ---"
+          cat android/build.gradle
+          echo "-----------------------------------------"
+
       - name: Set Java compatibility to 17 in build.gradle
         run: |
           # Robustly set Android Gradle Plugin to use Java 17 by directly setting compiler arguments.
